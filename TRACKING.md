@@ -19,7 +19,9 @@
 - Completed Slice 1: project scaffolding (uv, pyproject.toml, directory structure)
 - Completed Slice 2: data scripts (download, chaos injector, upload)
 - **Discovery:** Real data has `Airport_fee` (capital A), `passenger_count`/`RatecodeID` are float64 (nulls in source)
-- **Next:** Slice 3a — CDK data infra (S3, Glue, Athena)
+- Completed Slice 3a: CDK data infra deployed, data uploaded, Athena query verified (2.96M rows)
+- **Note:** Must use `isengardcli credentials 015331669295` for AWS access
+- **Next:** Slice 3b — CDK agent infra (DynamoDB, SNS, IAM, AgentCore)
 
 ---
 
@@ -43,7 +45,7 @@
 |-------|-------------|--------|-------|
 | 1 | Project scaffolding — pyproject.toml, directory structure, uv setup, .gitignore | ✅ DONE | Commit 178787a |
 | 2 | Data scripts — download_data.py, chaos_injector.py, chaos_config.yaml, upload_to_s3.py (all local, no AWS) | ✅ DONE | Commit 20f812a. Airport_fee capital A fix. |
-| 3a | CDK data infra — S3 bucket, Glue database/tables, Athena workgroup. Deploy → upload data → manual Athena query to verify | NOT STARTED | |
+| 3a | CDK data infra — S3 bucket, Glue database/tables, Athena workgroup. Deploy → upload data → manual Athena query to verify | ✅ DONE | Commit a7c0f13. Athena query: 2.96M rows OK. |
 | 3b | CDK agent infra — DynamoDB tables, SNS topic, IAM roles, AgentCore runtime. Deploy after agent code exists (Step 4) | NOT STARTED | |
 | 4 | Agent core — agent.py with AgentCore app, system prompt, Athena/DDB utility modules | NOT STARTED | |
 | 5 | First tools — scan_quality + check_schema + log_decision. Deploy 3b → deploy agent → test | NOT STARTED | |
@@ -72,6 +74,9 @@
 | `data/chaos_config.yaml` | 2 | ✅ Created | 6 injection types, seed 42. Fixed Airport_fee (capital A) |
 | `data/chaos_injector.py` | 2 | ✅ Created | Applies chaos config to parquet files |
 | `data/upload_to_s3.py` | 2 | ✅ Created | Uploads to S3 with Hive partitioning |
+| `cdk/app.py` | 3a | ✅ Created | CDK entrypoint, account 015331669295 us-east-1 |
+| `cdk/cdk.json` | 3a | ✅ Created | CDK config with context params |
+| `cdk/stacks/data_lake_stack.py` | 3a | ✅ Created | S3 bucket, Glue DB + 4 tables, Athena workgroup |
 
 ---
 
