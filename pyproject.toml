@@ -1,0 +1,53 @@
+[project]
+name = "sample-agentic-data-quality-pipeline"
+version = "0.1.0"
+description = "A Strands Agent on Amazon Bedrock AgentCore that autonomously monitors, diagnoses, and remediates data quality issues in an S3 data lake."
+readme = "README.md"
+license = "MIT-0"
+requires-python = ">=3.11"
+dependencies = [
+    "strands-agents[otel]>=0.2.0",
+    "boto3>=1.35.0",
+    "pyarrow>=14.0.0",
+    "pandas>=2.1.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+    "streamlit>=1.30.0",
+    "numpy>=1.26.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "moto[all]>=5.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+cdk = [
+    "aws-cdk-lib>=2.150.0",
+    "constructs>=10.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent"]
