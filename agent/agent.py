@@ -30,16 +30,16 @@ else:
     SYSTEM_PROMPT = "You are a Data Quality Guardian agent."
     logger.warning("system_prompt.md not found, using default")
 
-# --- Tool imports (will be populated in Slice 5+) ---
-# from agent.tools.scan_quality import scan_quality
-# from agent.tools.check_schema import check_schema
-# from agent.tools.log_decision import log_decision
+# --- Tool imports ---
+from agent.tools.scan_quality import scan_quality
+from agent.tools.check_schema import check_schema
+from agent.tools.log_decision import log_decision
 # from agent.tools.diagnose_issue import diagnose_issue
 # from agent.tools.quarantine_records import quarantine_records
 # from agent.tools.apply_transform import apply_transform
 # from agent.tools.notify_owner import notify_owner
 
-TOOLS = []  # Populated as tools are built in subsequent slices
+TOOLS = [scan_quality, check_schema, log_decision]
 
 # --- Agent ---
 _agent = None

@@ -21,7 +21,8 @@
 - **Discovery:** Real data has `Airport_fee` (capital A), `passenger_count`/`RatecodeID` are float64 (nulls in source)
 - Completed Slice 3a: CDK data infra deployed, data uploaded, Athena query verified (2.96M rows)
 - **Note:** Must use `isengardcli credentials 015331669295` for AWS access
-- **Next:** Slice 3b — CDK agent infra (DynamoDB, SNS, IAM, AgentCore)
+- Completed Slice 4: Agent core — agent.py, system prompt, all utility modules, configs
+- **Next:** Slice 3b — CDK agent infra (DynamoDB, SNS, IAM) then Slice 5 (first tools)
 
 ---
 
@@ -47,7 +48,7 @@
 | 2 | Data scripts — download_data.py, chaos_injector.py, chaos_config.yaml, upload_to_s3.py (all local, no AWS) | ✅ DONE | Commit 20f812a. Airport_fee capital A fix. |
 | 3a | CDK data infra — S3 bucket, Glue database/tables, Athena workgroup. Deploy → upload data → manual Athena query to verify | ✅ DONE | Commit a7c0f13. Athena query: 2.96M rows OK. |
 | 3b | CDK agent infra — DynamoDB tables, SNS topic, IAM roles, AgentCore runtime. Deploy after agent code exists (Step 4) | NOT STARTED | |
-| 4 | Agent core — agent.py with AgentCore app, system prompt, Athena/DDB utility modules | NOT STARTED | |
+| 4 | Agent core — agent.py with AgentCore app, system prompt, Athena/DDB utility modules | ✅ DONE | Commit ee3a881. Local mode works, AgentCore fallback. |
 | 5 | First tools — scan_quality + check_schema + log_decision. Deploy 3b → deploy agent → test | NOT STARTED | |
 | 6 | Smoke test — clean data scan → OK. Chaos data scan → violations detected. Validates core loop before remediation | NOT STARTED | Checkpoint: core agent loop proven |
 | 7 | Remaining tools — diagnose_issue, quarantine_records, apply_transform, notify_owner | NOT STARTED | |
@@ -77,6 +78,13 @@
 | `cdk/app.py` | 3a | ✅ Created | CDK entrypoint, account 015331669295 us-east-1 |
 | `cdk/cdk.json` | 3a | ✅ Created | CDK config with context params |
 | `cdk/stacks/data_lake_stack.py` | 3a | ✅ Created | S3 bucket, Glue DB + 4 tables, Athena workgroup |
+| `agent/utils/athena_client.py` | 4 | ✅ Created | Query execution + result parsing + bytes_scanned |
+| `agent/utils/dynamodb_client.py` | 4 | ✅ Created | CRUD for all 4 DDB tables, auto-versioned baselines |
+| `agent/utils/metrics.py` | 4 | ✅ Created | CloudWatch metric emission (DataQualityAgent namespace) |
+| `agent/config/quality_thresholds.yaml` | 4 | ✅ Created | Severity thresholds for all quality dimensions |
+| `agent/config/schema_baselines/yellow_taxi.json` | 4 | ✅ Created | 19-column baseline from real 2024 parquet schema |
+| `agent/system_prompt.md` | 4 | ✅ Created | Agent identity, workflow, thresholds, constraints |
+| `agent/agent.py` | 4 | ✅ Created | Strands agent + AgentCore entrypoint + local CLI |
 
 ---
 
