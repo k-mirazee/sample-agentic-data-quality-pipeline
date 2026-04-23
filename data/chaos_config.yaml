@@ -1,0 +1,72 @@
+# Chaos Injector Configuration
+# Controls what quality issues to introduce into the raw data
+
+chaos_config:
+  seed: 42
+
+  null_injection:
+    enabled: true
+    columns:
+      - column: passenger_count
+        null_rate: 0.15
+      - column: fare_amount
+        null_rate: 0.08
+      - column: payment_type
+        null_rate: 0.05
+      - column: trip_distance
+        null_rate: 0.03
+
+  outlier_injection:
+    enabled: true
+    rules:
+      - column: passenger_count
+        values: [-5, 0, 99, 255, 999]
+        inject_rate: 0.02
+      - column: fare_amount
+        min: -1000.0
+        max: 50000.0
+        inject_rate: 0.03
+      - column: trip_distance
+        min: -10.0
+        max: 10000.0
+        inject_rate: 0.02
+      - column: total_amount
+        min: -5000.0
+        max: 100000.0
+        inject_rate: 0.01
+
+  schema_drift:
+    enabled: true
+    actions:
+      - type: rename_column
+        from_name: fare_amount
+        to_name: fare_amt
+      - type: add_column
+        name: surcharge_v2
+        dtype: float64
+        fill_value: 0.0
+      - type: drop_column
+        name: Airport_fee
+      - type: change_type
+        column: VendorID
+        new_dtype: string
+
+  duplicate_injection:
+    enabled: true
+    exact_duplicates: 0.03
+    near_duplicates: 0.02
+
+  freshness_issues:
+    enabled: true
+    backdate_days: 7
+    affected_rate: 0.10
+
+  format_violations:
+    enabled: true
+    rules:
+      - column: store_and_fwd_flag
+        inject_values: ["YES", "NO", "maybe", "1", "0", ""]
+        inject_rate: 0.05
+      - column: RatecodeID
+        inject_values: [0, 7, 8, 99, -1]
+        inject_rate: 0.03

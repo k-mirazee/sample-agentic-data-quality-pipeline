@@ -37,15 +37,17 @@
 
 | Slice | Description | Status | Notes |
 |-------|-------------|--------|-------|
-| 1 | Project scaffolding — pyproject.toml, directory structure, uv setup, .gitignore | NOT STARTED | |
-| 2 | Data foundation — download script, chaos injector, chaos_config.yaml | NOT STARTED | |
-| 3 | CDK stacks — S3, Glue, Athena, DynamoDB, SNS, IAM, AgentCore runtime | NOT STARTED | Decision 6: AgentCore from start |
-| 4 | Agent core — agent.py with AgentCore app, system prompt, Athena/DDB utils | NOT STARTED | |
-| 5 | First tools — scan_quality + check_schema + log_decision, deploy & test | NOT STARTED | Checkpoint: prove agent can scan and log |
-| 6 | Remaining tools — diagnose_issue, quarantine_records, apply_transform, notify_owner | NOT STARTED | |
-| 7 | Observability — OpenTelemetry setup, CloudWatch metrics/alarms/dashboard | NOT STARTED | |
-| 8 | Streamlit dashboard — 5 pages reading from DDB + CloudWatch | NOT STARTED | |
-| 9 | Polish — README, DEMO_GUIDE, ARCHITECTURE.md, integration tests | NOT STARTED | |
+| 1 | Project scaffolding — pyproject.toml, directory structure, uv setup, .gitignore | ✅ DONE | Commit 178787a |
+| 2 | Data scripts — download_data.py, chaos_injector.py, chaos_config.yaml, upload_to_s3.py (all local, no AWS) | NOT STARTED | |
+| 3a | CDK data infra — S3 bucket, Glue database/tables, Athena workgroup. Deploy → upload data → manual Athena query to verify | NOT STARTED | |
+| 3b | CDK agent infra — DynamoDB tables, SNS topic, IAM roles, AgentCore runtime. Deploy after agent code exists (Step 4) | NOT STARTED | |
+| 4 | Agent core — agent.py with AgentCore app, system prompt, Athena/DDB utility modules | NOT STARTED | |
+| 5 | First tools — scan_quality + check_schema + log_decision. Deploy 3b → deploy agent → test | NOT STARTED | |
+| 6 | Smoke test — clean data scan → OK. Chaos data scan → violations detected. Validates core loop before remediation | NOT STARTED | Checkpoint: core agent loop proven |
+| 7 | Remaining tools — diagnose_issue, quarantine_records, apply_transform, notify_owner | NOT STARTED | |
+| 8 | Observability — OpenTelemetry, CloudWatch metrics/alarms/dashboard | NOT STARTED | |
+| 9 | Streamlit dashboard — 5 pages reading from DDB + CloudWatch | NOT STARTED | |
+| 10 | Polish — README, DEMO_GUIDE, ARCHITECTURE.md, integration tests | NOT STARTED | |
 
 ---
 
@@ -54,6 +56,14 @@
 | File | Slice | Status | Notes |
 |------|-------|--------|-------|
 | `TRACKING.md` | — | ✅ Created | This file |
+| `pyproject.toml` | 1 | ✅ Created | All deps, ruff/mypy/pytest config, hatch build config |
+| `.gitignore` | 1 | ✅ Created | Python, uv, CDK, data, IDE, OS |
+| `README.md` | 1 | ✅ Created | Placeholder — will expand in Slice 9 |
+| `agent/__init__.py` | 1 | ✅ Created | Empty |
+| `agent/tools/__init__.py` | 1 | ✅ Created | Empty |
+| `agent/utils/__init__.py` | 1 | ✅ Created | Empty |
+| `cdk/stacks/__init__.py` | 1 | ✅ Created | Empty |
+| `tests/**/__init__.py` | 1 | ✅ Created | Empty |
 
 ---
 
