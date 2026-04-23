@@ -15,7 +15,11 @@
 - Read and understood full spec
 - Discussed build approach: vertical slices, checkpoint after each
 - Created this tracking document
-- **Next:** Resolve Section 13 open design decisions, then begin Slice 1
+- Resolved all 7 design decisions
+- Completed Slice 1: project scaffolding (uv, pyproject.toml, directory structure)
+- Completed Slice 2: data scripts (download, chaos injector, upload)
+- **Discovery:** Real data has `Airport_fee` (capital A), `passenger_count`/`RatecodeID` are float64 (nulls in source)
+- **Next:** Slice 3a — CDK data infra (S3, Glue, Athena)
 
 ---
 
@@ -38,7 +42,7 @@
 | Slice | Description | Status | Notes |
 |-------|-------------|--------|-------|
 | 1 | Project scaffolding — pyproject.toml, directory structure, uv setup, .gitignore | ✅ DONE | Commit 178787a |
-| 2 | Data scripts — download_data.py, chaos_injector.py, chaos_config.yaml, upload_to_s3.py (all local, no AWS) | NOT STARTED | |
+| 2 | Data scripts — download_data.py, chaos_injector.py, chaos_config.yaml, upload_to_s3.py (all local, no AWS) | ✅ DONE | Commit 20f812a. Airport_fee capital A fix. |
 | 3a | CDK data infra — S3 bucket, Glue database/tables, Athena workgroup. Deploy → upload data → manual Athena query to verify | NOT STARTED | |
 | 3b | CDK agent infra — DynamoDB tables, SNS topic, IAM roles, AgentCore runtime. Deploy after agent code exists (Step 4) | NOT STARTED | |
 | 4 | Agent core — agent.py with AgentCore app, system prompt, Athena/DDB utility modules | NOT STARTED | |
@@ -64,6 +68,10 @@
 | `agent/utils/__init__.py` | 1 | ✅ Created | Empty |
 | `cdk/stacks/__init__.py` | 1 | ✅ Created | Empty |
 | `tests/**/__init__.py` | 1 | ✅ Created | Empty |
+| `data/download_data.py` | 2 | ✅ Created | Downloads NYC TLC parquet from CloudFront |
+| `data/chaos_config.yaml` | 2 | ✅ Created | 6 injection types, seed 42. Fixed Airport_fee (capital A) |
+| `data/chaos_injector.py` | 2 | ✅ Created | Applies chaos config to parquet files |
+| `data/upload_to_s3.py` | 2 | ✅ Created | Uploads to S3 with Hive partitioning |
 
 ---
 
