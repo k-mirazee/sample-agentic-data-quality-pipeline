@@ -32,8 +32,9 @@
 - Completed Slice 6: Smoke test — chaos data broke Athena (VendorID int→string), agent detected via check_schema, logged 3 decisions, flagged CRITICAL. Clean data restored.
 - **Next:** Slice 7 — Remaining tools (diagnose_issue, quarantine_records, apply_transform, notify_owner)
 - Completed Slice 7: All 4 remaining tools built and wired. Full agent loop tested: 14 tool calls (scan→diagnose×3→quarantine→notify×3→log×4). SNS notifications delivered.
-- **Known bug:** quarantine UNLOAD fails if S3 path already has data from previous run. Needs unique path per run.
+- **Known bug:** ~~quarantine UNLOAD fails if S3 path already has data from previous run. Needs unique path per run.~~ FIXED (commit cd76d26)
 - **Next:** Slice 8 — Observability (OpenTelemetry, CloudWatch alarms/dashboard)
+- **Session ended:** 2026-04-24 ~14:56 CDT
 
 ### Pickup Instructions for Next Session
 1. Read this file: `~/sample-agentic-data-quality-pipeline/TRACKING.md`
@@ -52,15 +53,16 @@
 - **CDK stacks:** DqAgentDataLake, DqAgentObservability, DqAgentNotification
 
 ### What Works Right Now
-- Agent runs locally: `uv run python -m agent.agent --table raw_yellow_taxi --partition "year=2024/month=01"`
-- 3 tools wired: scan_quality, check_schema, log_decision
-- Chaos injector tested locally: `data/chaos/` has corrupted Jan 2024 data ready to upload
-- Download script: can fetch more months with `uv run python data/download_data.py --num-months 3`
+- Agent runs locally with all 7 tools: `uv run python -m agent.agent --table raw_yellow_taxi --partition "year=2024/month=01"`
+- Full loop proven: scan → diagnose ×3 → quarantine → notify ×3 → log ×4 (14 tool calls)
+- 7 tools: scan_quality, check_schema, log_decision, diagnose_issue, quarantine_records, apply_transform, notify_owner
+- Chaos injector tested locally: `data/chaos/` has corrupted Jan 2024 data
+- SNS notifications delivering successfully
+- DynamoDB tables storing scan results, decisions, baselines, remediation history
+- CloudWatch metrics emitting to DataQualityAgent namespace
 
-### What's Left (Slices 6-10)
-- Slice 6: Smoke test — upload chaos data, re-scan, verify agent detects new issues
-- Slice 7: Remaining 4 tools — diagnose_issue, quarantine_records, apply_transform, notify_owner
-- Slice 8: Observability — OpenTelemetry, CloudWatch alarms/dashboard
+### What's Left (Slices 8-10)
+- Slice 8: Observability — OpenTelemetry setup, CloudWatch alarms/dashboard CDK
 - Slice 9: Streamlit dashboard — 5 pages
 - Slice 10: Polish — README, DEMO_GUIDE, ARCHITECTURE.md, integration tests
 
