@@ -31,6 +31,9 @@
 ### Session 2 — 2026-04-24
 - Completed Slice 6: Smoke test — chaos data broke Athena (VendorID int→string), agent detected via check_schema, logged 3 decisions, flagged CRITICAL. Clean data restored.
 - **Next:** Slice 7 — Remaining tools (diagnose_issue, quarantine_records, apply_transform, notify_owner)
+- Completed Slice 7: All 4 remaining tools built and wired. Full agent loop tested: 14 tool calls (scan→diagnose×3→quarantine→notify×3→log×4). SNS notifications delivered.
+- **Known bug:** quarantine UNLOAD fails if S3 path already has data from previous run. Needs unique path per run.
+- **Next:** Slice 8 — Observability (OpenTelemetry, CloudWatch alarms/dashboard)
 
 ### Pickup Instructions for Next Session
 1. Read this file: `~/sample-agentic-data-quality-pipeline/TRACKING.md`
@@ -88,7 +91,7 @@
 | 4 | Agent core — agent.py with AgentCore app, system prompt, Athena/DDB utility modules | ✅ DONE | Commit ee3a881. Local mode works, AgentCore fallback. |
 | 5 | First tools — scan_quality + check_schema + log_decision. Deploy 3b → deploy agent → test | ✅ DONE | Commit bf42fd8. Agent scanned real data successfully. |
 | 6 | Smoke test — clean data scan → OK. Chaos data scan → violations detected. Validates core loop before remediation | ✅ DONE | Agent detected schema drift on chaos data, pivoted to check_schema, flagged CRITICAL. |
-| 7 | Remaining tools — diagnose_issue, quarantine_records, apply_transform, notify_owner | NOT STARTED | |
+| 7 | Remaining tools — diagnose_issue, quarantine_records, apply_transform, notify_owner | ✅ DONE | All 7 tools working. 14 tool calls in full loop. |
 | 8 | Observability — OpenTelemetry, CloudWatch metrics/alarms/dashboard | NOT STARTED | |
 | 9 | Streamlit dashboard — 5 pages reading from DDB + CloudWatch | NOT STARTED | |
 | 10 | Polish — README, DEMO_GUIDE, ARCHITECTURE.md, integration tests | NOT STARTED | |
@@ -127,6 +130,10 @@
 | `agent/tools/scan_quality.py` | 5 | ✅ Created | Completeness, freshness, distribution checks via Athena |
 | `agent/tools/check_schema.py` | 5 | ✅ Created | Glue schema vs DDB baseline drift detection |
 | `agent/tools/log_decision.py` | 5 | ✅ Created | DDB + CloudWatch decision logging |
+| `agent/tools/diagnose_issue.py` | 7 | ✅ Created | Separate Bedrock call for focused LLM diagnosis |
+| `agent/tools/quarantine_records.py` | 7 | ✅ Created | Athena UNLOAD to quarantine zone |
+| `agent/tools/apply_transform.py` | 7 | ✅ Created | fill_nulls, clip_outliers, deduplicate, rename_columns |
+| `agent/tools/notify_owner.py` | 7 | ✅ Created | SNS publish with severity-prefixed subject |
 
 ---
 
