@@ -28,6 +28,10 @@
 - **Next:** Slice 6 — Smoke test (clean vs chaos data)
 - **Session ended:** 2026-04-23 ~16:15 CDT
 
+### Session 2 — 2026-04-24
+- Completed Slice 6: Smoke test — chaos data broke Athena (VendorID int→string), agent detected via check_schema, logged 3 decisions, flagged CRITICAL. Clean data restored.
+- **Next:** Slice 7 — Remaining tools (diagnose_issue, quarantine_records, apply_transform, notify_owner)
+
 ### Pickup Instructions for Next Session
 1. Read this file: `~/sample-agentic-data-quality-pipeline/TRACKING.md`
 2. Read the spec: `~/Desktop/SPEC-agentic-data-quality-pipeline.md`
@@ -83,7 +87,7 @@
 | 3b | CDK agent infra — DynamoDB tables, SNS topic, IAM roles, AgentCore runtime. Deploy after agent code exists (Step 4) | ✅ DONE | Commit bf42fd8. 4 DDB tables + SNS topic deployed. |
 | 4 | Agent core — agent.py with AgentCore app, system prompt, Athena/DDB utility modules | ✅ DONE | Commit ee3a881. Local mode works, AgentCore fallback. |
 | 5 | First tools — scan_quality + check_schema + log_decision. Deploy 3b → deploy agent → test | ✅ DONE | Commit bf42fd8. Agent scanned real data successfully. |
-| 6 | Smoke test — clean data scan → OK. Chaos data scan → violations detected. Validates core loop before remediation | NOT STARTED | Checkpoint: core agent loop proven |
+| 6 | Smoke test — clean data scan → OK. Chaos data scan → violations detected. Validates core loop before remediation | ✅ DONE | Agent detected schema drift on chaos data, pivoted to check_schema, flagged CRITICAL. |
 | 7 | Remaining tools — diagnose_issue, quarantine_records, apply_transform, notify_owner | NOT STARTED | |
 | 8 | Observability — OpenTelemetry, CloudWatch metrics/alarms/dashboard | NOT STARTED | |
 | 9 | Streamlit dashboard — 5 pages reading from DDB + CloudWatch | NOT STARTED | |
