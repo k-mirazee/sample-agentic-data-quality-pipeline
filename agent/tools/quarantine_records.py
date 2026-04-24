@@ -31,7 +31,8 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
     issue_id = issue_id or str(uuid.uuid4())
     parts = partition.split("/")
     where = " AND ".join(f"{p.split('=')[0]}='{p.split('=')[1]}'" for p in parts)
-    quarantine_path = f"s3://{S3_BUCKET}/quarantine/{table_name}/{partition}/issue_id={issue_id}/"
+    run_ts = uuid.uuid4().hex[:8]
+    quarantine_path = f"s3://{S3_BUCKET}/quarantine/{table_name}/{partition}/issue_id={issue_id}/{run_ts}/"
 
     # Count bad records first
     count_sql = f"SELECT COUNT(*) AS cnt FROM {DATABASE}.{table_name} WHERE {where} AND ({filter_condition})"

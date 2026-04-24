@@ -69,8 +69,10 @@ def apply_transform(table_name: str, partition: str, transform_type: str, transf
     parts = partition.split("/")
     where = " AND ".join(f"{p.split('=')[0]}='{p.split('=')[1]}'" for p in parts)
 
+    import uuid as _uuid
+    run_ts = _uuid.uuid4().hex[:8]
     curated_table = table_name.replace("raw_", "curated_")
-    output_path = f"s3://{S3_BUCKET}/curated/{table_name.replace('raw_', '')}/{partition}/"
+    output_path = f"s3://{S3_BUCKET}/curated/{table_name.replace('raw_', '')}/{partition}/{run_ts}/"
 
     # Count source records
     count_sql = f"SELECT COUNT(*) AS cnt FROM {DATABASE}.{table_name} WHERE {where}"
