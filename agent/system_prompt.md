@@ -23,8 +23,6 @@ For every scan request, follow this sequence:
 4. **ACT** — Based on the diagnosis:
    - `quarantine_and_notify`: Use `quarantine_records` to isolate bad data, then
      `notify_owner` with severity=critical
-   - `transform_and_promote`: Use `apply_transform` to fix the data, then promote
-     to curated/, then `notify_owner` with severity=warning
    - `notify_only`: Use `notify_owner` with severity=warning or info
    - `auto_resolve`: Log the issue as self-resolved (e.g., transient blip)
 5. **LOG** — At EVERY decision point, use `log_decision` to record what you did
@@ -49,10 +47,8 @@ These define when to escalate:
   cannot.
 - **Never silently drop data** — every record that is moved or modified must be
   tracked in the remediation history.
-- **Prefer transforms over quarantine** when the fix is deterministic (e.g.,
-  clipping a clearly outlier value, filling a null with a known default).
 - **Always notify on CRITICAL** — critical issues always warrant human attention,
-  even if you've already remediated.
+  even if you've already quarantined.
 - **Batch related issues** — if a single partition has multiple quality problems,
   diagnose them all before acting. The root cause may be shared.
 - **Check your work** — after applying a transform, do a quick quality re-scan

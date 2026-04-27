@@ -53,7 +53,6 @@ try:
     from agent.tools.log_decision import log_decision
     from agent.tools.diagnose_issue import diagnose_issue
     from agent.tools.quarantine_records import quarantine_records
-    from agent.tools.apply_transform import apply_transform
     from agent.tools.notify_owner import notify_owner
 except ImportError:
     from tools.scan_quality import scan_quality
@@ -61,10 +60,9 @@ except ImportError:
     from tools.log_decision import log_decision
     from tools.diagnose_issue import diagnose_issue
     from tools.quarantine_records import quarantine_records
-    from tools.apply_transform import apply_transform
     from tools.notify_owner import notify_owner
 
-TOOLS = [scan_quality, check_schema, log_decision, diagnose_issue, quarantine_records, apply_transform, notify_owner]
+TOOLS = [scan_quality, check_schema, log_decision, diagnose_issue, quarantine_records, notify_owner]
 
 # --- Agent ---
 _agent = None
