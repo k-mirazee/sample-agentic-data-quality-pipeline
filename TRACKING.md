@@ -43,6 +43,8 @@
 - Completed Slice 10: AgentCore deployed. Fixed dual-context imports (agent.X → try/except → X). Broadened IAM to s3:*/athena:*/glue:*/dynamodb:*. Agent invocation working from cloud.
 - **Agent ARN:** `arn:aws:bedrock-agentcore:us-east-1:015331669295:runtime/dq_agent-dl3UfNEcb1`
 - **Next:** Slice 11 — Polish (README, DEMO_GUIDE, ARCHITECTURE.md)
+- Completed Slice 11: README, DEMO_GUIDE, ARCHITECTURE.md, LICENSE, CONTRIBUTING
+- **🎉 PROJECT COMPLETE — All 11 slices done.**
 
 ### Pickup Instructions for Next Session
 1. Read this file: `~/sample-agentic-data-quality-pipeline/TRACKING.md`
@@ -105,7 +107,7 @@
 | 8 | Observability — OpenTelemetry, CloudWatch metrics/alarms/dashboard | ✅ DONE | OTEL init + 3 alarms + dashboard deployed. |
 | 9 | Streamlit dashboard — 5 pages reading from DDB + CloudWatch | ✅ DONE | 5 pages + utils. Queries return real data. |
 | 10 | AgentCore deployment — CDK agent stack, package agent, deploy runtime, test invocation | ✅ DONE | Agent ARN: dq_agent-dl3UfNEcb1. Scans real data from cloud. |
-| 11 | Polish — README, DEMO_GUIDE, ARCHITECTURE.md, integration tests | NOT STARTED | After AgentCore is working |
+| 11 | Polish — README, DEMO_GUIDE, ARCHITECTURE.md, integration tests | ✅ DONE | README, DEMO_GUIDE, ARCHITECTURE, LICENSE, CONTRIBUTING |
 
 ---
 
