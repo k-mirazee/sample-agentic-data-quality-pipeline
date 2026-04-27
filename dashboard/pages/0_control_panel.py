@@ -29,7 +29,7 @@ if st.button("🚀 Scan Now", type="primary"):
     prompt = (
         f"Scan the table raw_yellow_taxi partition {scan_partition} for all quality issues. "
         f"For any violations found, diagnose the root cause. "
-        f"Quarantine records with invalid values (fare_amount < 0 OR fare_amount > 500). "
+        f"For distribution outliers, quarantine the bad records. "
         f"Notify the owner about all findings with severity and recommended next steps. "
         f"Log every decision."
     )
