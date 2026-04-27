@@ -1,0 +1,38 @@
+default_agent: dq_agent
+agents:
+  dq_agent:
+    name: dq_agent
+    entrypoint: agent.py
+    platform: linux/arm64
+    container_runtime: none
+    aws:
+      execution_role: arn:aws:iam::015331669295:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-89dfb9b1b3
+      execution_role_auto_create: false
+      account: 015331669295
+      region: us-east-1
+      ecr_repository: 015331669295.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-dq_agent
+      ecr_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+    bedrock_agentcore:
+      agent_id: dq_agent-dl3UfNEcb1
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:015331669295:runtime/dq_agent-dl3UfNEcb1
+      agent_session_id: de70c7a4-be9a-47ff-829d-5f0de63e3e69
+    codebuild:
+      project_name: bedrock-agentcore-dq_agent-builder
+      execution_role: arn:aws:iam::015331669295:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-89dfb9b1b3
+      source_bucket: bedrock-agentcore-codebuild-sources-015331669295-us-east-1
+    memory:
+      mode: STM_ONLY
+      memory_id: dq_agent_mem-TnG2NfGWnN
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:015331669295:memory/dq_agent_mem-TnG2NfGWnN
+      memory_name: dq_agent_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: false
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null

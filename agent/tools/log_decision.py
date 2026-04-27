@@ -4,7 +4,10 @@ import json
 
 from strands import tool
 
-from agent.utils import dynamodb_client, metrics
+try:
+    from agent.utils import dynamodb_client, metrics
+except ImportError:
+    from utils import dynamodb_client, metrics
 
 
 @tool

@@ -8,7 +8,10 @@ from pathlib import Path
 import yaml
 from strands import tool
 
-from agent.utils import athena_client, dynamodb_client, metrics
+try:
+    from agent.utils import athena_client, dynamodb_client, metrics
+except ImportError:
+    from utils import athena_client, dynamodb_client, metrics
 
 DATABASE = os.getenv("GLUE_DATABASE", "dq_agent_demo")
 

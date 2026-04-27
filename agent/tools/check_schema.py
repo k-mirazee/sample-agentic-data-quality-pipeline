@@ -8,7 +8,10 @@ from pathlib import Path
 import boto3
 from strands import tool
 
-from agent.utils import dynamodb_client
+try:
+    from agent.utils import dynamodb_client
+except ImportError:
+    from utils import dynamodb_client
 
 REGION = os.getenv("AWS_REGION", "us-east-1")
 DATABASE = os.getenv("GLUE_DATABASE", "dq_agent_demo")

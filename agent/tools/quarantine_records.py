@@ -6,7 +6,10 @@ import uuid
 
 from strands import tool
 
-from agent.utils import athena_client, dynamodb_client, metrics
+try:
+    from agent.utils import athena_client, dynamodb_client, metrics
+except ImportError:
+    from utils import athena_client, dynamodb_client, metrics
 
 DATABASE = os.getenv("GLUE_DATABASE", "dq_agent_demo")
 S3_BUCKET = os.getenv("S3_BUCKET", "dq-agent-demo-015331669295")

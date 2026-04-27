@@ -6,7 +6,10 @@ import os
 import boto3
 from strands import tool
 
-from agent.utils import dynamodb_client
+try:
+    from agent.utils import dynamodb_client
+except ImportError:
+    from utils import dynamodb_client
 
 MODEL_ID = os.getenv("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
 REGION = os.getenv("AWS_REGION", "us-east-1")
