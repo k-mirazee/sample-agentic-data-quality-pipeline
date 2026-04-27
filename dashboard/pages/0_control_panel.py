@@ -34,21 +34,55 @@ if st.button("🚀 Scan Now", type="primary"):
         f"After remediation, notify the owner about what was found and fixed. "
         f"Log every decision."
     )
-    with st.spinner(f"Agent working on {scan_partition}... (this takes ~30-60s)"):
-        result = subprocess.run(
-            [UV, "run", "python", "-m", "agent.agent",
-             "--table", "raw_yellow_taxi", "--partition", scan_partition,
-             "--prompt", prompt],
-            capture_output=True, text=True, cwd=PROJECT_ROOT, timeout=300,
-            env={**os.environ, "PYTHONPATH": PROJECT_ROOT},
-        )
-    if result.returncode == 0:
-        st.success("✅ Complete! Check Overview, Scan Details, and Remediation History.")
-        with st.expander("Agent output"):
-            st.text(result.stdout[-5000:] if len(result.stdout) > 5000 else result.stdout)
+    status = st.empty()
+    progress = st.progress(0, text="Starting agent...")
+    log_area = st.container()
+
+    proc = subprocess.Popen(
+        [UV, "run", "python", "-m", "agent.agent",
+         "--table", "raw_yellow_taxi", "--partition", scan_partition,
+         "--prompt", prompt],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        text=True, cwd=PROJECT_ROOT,
+        env={**os.environ, "PYTHONPATH": PROJECT_ROOT},
+    )
+
+    tool_count = 0
+    steps = {
+        "scan_quality": ("🔍 Scanning data quality...", 15),
+        "log_decision": ("📝 Logging decision...", None),
+        "diagnose_issue": ("🧠 Diagnosing root cause...", 40),
+        "check_schema": ("📋 Checking schema...", 30),
+        "quarantine_records": ("🔒 Quarantining bad records...", 60),
+        "apply_transform": ("🔧 Applying transform...", 70),
+        "notify_owner": ("📨 Sending notification...", 85),
+    }
+
+    output_lines = []
+    for line in proc.stdout:
+        output_lines.append(line)
+        stripped = line.strip()
+
+        # Detect tool calls
+        if stripped.startswith("Tool #"):
+            tool_count += 1
+            for tool_name, (msg, pct) in steps.items():
+                if tool_name in stripped:
+                    status.info(f"**Step {tool_count}:** {msg}")
+                    if pct:
+                        progress.progress(pct, text=msg)
+                    break
+
+    proc.wait()
+    progress.progress(100, text="✅ Complete!")
+
+    if proc.returncode == 0:
+        status.success(f"✅ Agent completed — {tool_count} tool calls. Check Overview and Remediation History.")
     else:
-        st.error("❌ Failed")
-        st.text(result.stderr[-2000:])
+        status.error("❌ Agent failed")
+
+    with st.expander("Full agent output"):
+        st.text("".join(output_lines[-200:]))
 
 st.markdown("---")
 
