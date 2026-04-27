@@ -28,7 +28,10 @@ scan_partition = st.selectbox("Partition to scan", PARTITIONS, key="scan_part")
 if st.button("🚀 Scan Now", type="primary"):
     prompt = (
         f"Scan the table raw_yellow_taxi partition {scan_partition} for all quality issues. "
-        f"For any violations found, diagnose the root cause and take appropriate remediation action. "
+        f"For any violations found, diagnose the root cause. Then take remediation action: "
+        f"use quarantine_records for outlier records (fare_amount < 0 OR fare_amount > 500), "
+        f"and use apply_transform with fill_nulls for null passenger_count (default value 1). "
+        f"After remediation, notify the owner about what was found and fixed. "
         f"Log every decision."
     )
     with st.spinner(f"Agent working on {scan_partition}... (this takes ~30-60s)"):
