@@ -42,8 +42,8 @@ if st.button("🚀 Scan Now", type="primary"):
          "--table", "raw_yellow_taxi", "--partition", scan_partition,
          "--prompt", prompt],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        text=True, cwd=PROJECT_ROOT,
-        env={**os.environ, "PYTHONPATH": PROJECT_ROOT},
+        text=True, cwd=PROJECT_ROOT, bufsize=1,
+        env={**os.environ, "PYTHONPATH": PROJECT_ROOT, "PYTHONUNBUFFERED": "1"},
     )
 
     tool_count = 0
@@ -62,15 +62,21 @@ if st.button("🚀 Scan Now", type="primary"):
         output_lines.append(line)
         stripped = line.strip()
 
-        # Detect tool calls
-        if stripped.startswith("Tool #"):
-            tool_count += 1
-            for tool_name, (msg, pct) in steps.items():
-                if tool_name in stripped:
-                    status.info(f"**Step {tool_count}:** {msg}")
-                    if pct:
-                        progress.progress(pct, text=msg)
-                    break
+        # Detect tool calls from various output patterns
+        matched = False
+        for tool_name, (msg, pct) in steps.items():
+            if tool_name in stripped:
+                tool_count += 1
+                status.info(f"**Step {tool_count}:** {msg}")
+                if pct:
+                    progress.progress(pct, text=msg)
+                matched = True
+                break
+
+        # Also show agent thinking lines
+        if not matched and stripped and not stripped.startswith(("INFO", "WARNING", "ERROR")):
+            if len(stripped) > 20 and not stripped.startswith("{"):
+                status.info(f"🤖 {stripped[:100]}..."  if len(stripped) > 100 else f"🤖 {stripped}")
 
     proc.wait()
     progress.progress(100, text="✅ Complete!")
