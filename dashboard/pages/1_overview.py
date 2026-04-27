@@ -61,21 +61,19 @@ col2.metric("Total Decisions", len(decisions))
 col3.metric("Avg Score", f"{sum(s.get('overall_score', 0) for s in scans) / max(len(scans), 1):.1f}" if scans else "N/A")
 col4.metric("Active Alarms", sum(1 for a in alarms if a["state"] == "ALARM"))
 
-# --- Remediation Impact ---
-st.subheader("🔧 Remediation Impact")
+# --- Quarantine Summary ---
+st.subheader("🔒 Quarantine Summary")
 remediations = get_all_remediations(limit=50)
-if remediations:
-    scored = [r for r in remediations if r.get("before_score", 0) > 0 or r.get("after_score", 0) > 0]
-    if scored:
-        rem_df = pd.DataFrame([{
-            "Timestamp": r.get("SK", "")[:19],
-            "Action": r.get("action_type", ""),
-            "Records Fixed": r.get("records_affected", 0),
-            "Before Score": r.get("before_score", 0),
-            "After Score": r.get("after_score", 0),
-        } for r in scored])
-        st.dataframe(rem_df, use_container_width=True, hide_index=True)
-    else:
-        st.info("Remediations recorded but no before/after scores yet.")
+quarantines = [r for r in remediations if r.get("action_type") == "quarantine"]
+if quarantines:
+    q_df = pd.DataFrame([{
+        "Timestamp": r.get("SK", "")[:19],
+        "Table": r.get("PK", "").split("#")[0],
+        "Records Isolated": r.get("records_affected", 0),
+        "Issue": r.get("issue_id", "")[:20],
+    } for r in quarantines])
+    st.dataframe(q_df, use_container_width=True, hide_index=True)
+    total_quarantined = sum(r.get("records_affected", 0) for r in quarantines)
+    st.metric("Total Records Quarantined", f"{total_quarantined:,}")
 else:
-    st.info("No remediations yet.")
+    st.info("No records quarantined yet.")
