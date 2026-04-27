@@ -42,6 +42,36 @@ if st.button("🚀 Scan Now", type="primary"):
 
 st.markdown("---")
 
+# --- Scan + Remediate ---
+st.subheader("🔍🔧 Scan + Remediate")
+st.caption("Scans for issues, diagnoses them, applies fixes, and re-scans to show improvement.")
+remediate_partition = st.selectbox("Partition to scan & fix", PARTITIONS, key="remediate_part")
+if st.button("🚀 Scan + Remediate + Re-scan", type="primary"):
+    prompt = (
+        f"Scan the table raw_yellow_taxi partition {remediate_partition} for all quality issues. "
+        f"For any violations found: diagnose the root cause, then apply_transform to fix them "
+        f"(use clip_outliers for fare_amount with min=0 max=500, and fill_nulls for passenger_count with default 1). "
+        f"After remediation, re-scan the raw partition and report the before and after scores. "
+        f"Log every decision."
+    )
+    with st.spinner(f"Agent scanning, diagnosing, remediating {remediate_partition}... (this takes ~60s)"):
+        result = subprocess.run(
+            [UV, "run", "python", "-m", "agent.agent",
+             "--table", "raw_yellow_taxi", "--partition", remediate_partition,
+             "--prompt", prompt],
+            capture_output=True, text=True, cwd=PROJECT_ROOT, timeout=300,
+            env={**os.environ, "PYTHONPATH": PROJECT_ROOT},
+        )
+    if result.returncode == 0:
+        st.success("✅ Scan + Remediate complete! Check Agent Traces and Remediation History.")
+        with st.expander("Agent output"):
+            st.text(result.stdout[-5000:] if len(result.stdout) > 5000 else result.stdout)
+    else:
+        st.error("❌ Failed")
+        st.text(result.stderr[-2000:])
+
+st.markdown("---")
+
 # --- Inject Chaos ---
 st.subheader("💥 Inject Chaos")
 chaos_partition = st.selectbox("Partition to corrupt", PARTITIONS, key="chaos_part")
