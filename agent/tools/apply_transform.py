@@ -94,23 +94,21 @@ def apply_transform(table_name: str, partition: str, transform_type: str, transf
     unload_sql = f"UNLOAD ({select_sql}) TO '{output_path}' WITH (format = 'PARQUET')"
     athena_client.run_query(unload_sql)
 
-    # --- Compute improvement estimate ---
-    before_issues = (before.get("null_passengers", 0) or 0) + (before.get("fare_outliers", 0) or 0)
-    before_pct = (before_issues / max(source_count, 1)) * 100
-    before_score = max(0, 100 - before_pct * 2)
+    # --- Use actual scan score as before ---
+    recent = dynamodb_client.get_recent_scans(table_name, partition, limit=1)
+    before_score = round(recent[0].get("overall_score", 0), 1) if recent else 0.0
 
-    # After transform, the targeted issues should be resolved
+    # After transform, estimate improvement based on what was fixed
     if transform_type == "fill_nulls":
         fixed = before.get("null_passengers", 0) or 0
     elif transform_type == "clip_outliers":
         fixed = before.get("fare_outliers", 0) or 0
     elif transform_type == "deduplicate":
-        fixed = 0  # row count changes, not quality score
+        fixed = 0
     else:
         fixed = 0
-    after_issues = max(0, before_issues - fixed)
-    after_pct = (after_issues / max(source_count, 1)) * 100
-    after_score = max(0, 100 - after_pct * 2)
+    fix_pct = (fixed / max(source_count, 1)) * 100
+    after_score = min(100.0, round(before_score + fix_pct, 1))
 
     # Record remediation with real scores
     dynamodb_client.put_remediation(
