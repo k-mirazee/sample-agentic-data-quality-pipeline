@@ -38,8 +38,11 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
     quarantine_path = f"s3://{S3_BUCKET}/quarantine/{table_name}/{partition}/issue_id={issue_id}/{run_ts}/"
 
     try:
+        # Sanitize filter — ensure no Python Decimal types leak into SQL
+        filter_clean = str(filter_condition).strip()
+
         # Count bad records first
-        count_sql = f"SELECT COUNT(*) AS cnt FROM {DATABASE}.{table_name} WHERE {where} AND ({filter_condition})"
+        count_sql = f"SELECT COUNT(*) AS cnt FROM {DATABASE}.{table_name} WHERE {where} AND ({filter_clean})"
         rows, _ = athena_client.run_query(count_sql)
         bad_count = rows[0]["cnt"] if rows else 0
     except Exception as e:
@@ -56,7 +59,7 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
 
         # UNLOAD bad records to quarantine path
         unload_sql = (
-            f"UNLOAD (SELECT * FROM {DATABASE}.{table_name} WHERE {where} AND ({filter_condition})) "
+            f"UNLOAD (SELECT * FROM {DATABASE}.{table_name} WHERE {where} AND ({filter_clean})) "
             f"TO '{quarantine_path}' WITH (format = 'PARQUET')"
         )
         athena_client.run_query(unload_sql)

@@ -14,25 +14,37 @@ DATABASE = os.getenv("GLUE_DATABASE", "dq_agent_demo")
 S3_BUCKET = os.getenv("S3_BUCKET", "dq-agent-demo-015331669295")
 
 
+ALL_COLUMNS = [
+    "VendorID", "tpep_pickup_datetime", "tpep_dropoff_datetime", "passenger_count",
+    "trip_distance", "RatecodeID", "store_and_fwd_flag", "PULocationID", "DOLocationID",
+    "payment_type", "fare_amount", "extra", "mta_tax", "tip_amount", "tolls_amount",
+    "improvement_surcharge", "total_amount", "congestion_surcharge", "Airport_fee",
+]
+
+
 def _build_transform_sql(table: str, where: str, transform_type: str, config: dict) -> str:
     """Build the SELECT statement for the transform."""
     if transform_type == "fill_nulls":
-        coalesces = []
-        for col, fill in config.get("columns", {}).items():
-            if fill == "median":
-                coalesces.append(f"COALESCE({col}, APPROX_PERCENTILE({col}, 0.5) OVER ()) AS {col}")
+        cols = config.get("columns", {})
+        select_parts = []
+        for c in ALL_COLUMNS:
+            if c in cols:
+                fill = cols[c]
+                select_parts.append(f"COALESCE({c}, {fill}) AS {c}")
             else:
-                coalesces.append(f"COALESCE({col}, {fill}) AS {col}")
-        # Select transformed columns + all others
-        return f"SELECT *, {', '.join(coalesces)} FROM {DATABASE}.{table} WHERE {where}"
+                select_parts.append(c)
+        return f"SELECT {', '.join(select_parts)} FROM {DATABASE}.{table} WHERE {where}"
 
     if transform_type == "clip_outliers":
-        clips = []
-        for col, bounds in config.get("columns", {}).items():
-            clips.append(
-                f"GREATEST({bounds['min']}, LEAST({bounds['max']}, {col})) AS {col}_clipped"
-            )
-        return f"SELECT *, {', '.join(clips)} FROM {DATABASE}.{table} WHERE {where}"
+        cols = config.get("columns", {})
+        select_parts = []
+        for c in ALL_COLUMNS:
+            if c in cols:
+                b = cols[c]
+                select_parts.append(f"GREATEST({b['min']}, LEAST({b['max']}, {c})) AS {c}")
+            else:
+                select_parts.append(c)
+        return f"SELECT {', '.join(select_parts)} FROM {DATABASE}.{table} WHERE {where}"
 
     if transform_type == "deduplicate":
         keys = config.get("key_columns", [])
