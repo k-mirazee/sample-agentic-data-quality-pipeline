@@ -2,22 +2,16 @@
 
 import streamlit as st
 
-st.set_page_config(page_title="DQ Agent Dashboard", page_icon="🤖", layout="wide")
+st.set_page_config(page_title="DQ Agent", page_icon="🤖", layout="wide")
 
-st.title("🤖 Data Quality Agent Dashboard")
+st.title("🤖 Data Quality Agent")
 st.markdown(
-    "Real-time observability for the autonomous Data Quality Guardian agent. "
-    "Select a page from the sidebar to explore scan results, agent traces, costs, and remediation history."
+    "Autonomous data quality monitoring powered by Strands Agents and Amazon Bedrock AgentCore. "
+    "Select a page from the sidebar."
 )
-
-st.sidebar.success("Select a page above.")
 
 st.markdown("---")
 col1, col2, col3 = st.columns(3)
-col1.info("**📊 Overview** — Quality scores, anomalies, activity feed")
-col2.info("**🔍 Scan Details** — Drill into quality dimensions")
-col3.info("**🧠 Agent Traces** — Reasoning flow and tool calls")
-
-col4, col5, _ = st.columns(3)
-col4.info("**💰 Cost Tracker** — Token spend and Athena costs")
-col5.info("**🔧 Remediation** — Actions taken and before/after scores")
+col1.info("**🎮 Control Panel**\n\nRun scans, inject chaos, restore data")
+col2.info("**📊 Dashboard**\n\nQuality scores, violations, quarantine status")
+col3.info("**🧠 Agent Activity**\n\nDecision timeline with reasoning")
