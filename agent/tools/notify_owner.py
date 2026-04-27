@@ -6,6 +6,11 @@ import os
 import boto3
 from strands import tool
 
+try:
+    from agent.utils import dynamodb_client
+except ImportError:
+    from utils import dynamodb_client
+
 REGION = os.getenv("AWS_REGION", "us-east-1")
 SNS_TOPIC_ARN = os.getenv("SNS_TOPIC_ARN", "")
 
@@ -61,6 +66,16 @@ def notify_owner(issue_id: str, severity: str, message: str) -> str:
         TopicArn=topic_arn,
         Subject=subject,
         Message=message,
+    )
+
+    # Auto-log notification
+    dynamodb_client.put_decision(
+        decision_type="notification_sent",
+        table_name="unknown", partition="unknown",
+        context={"issue_id": issue_id, "severity": severity},
+        reasoning=f"Sending {severity} notification for issue {issue_id[:8]}",
+        action_taken=f"SNS publish ({severity})",
+        outcome=f"Delivered: {resp.get('MessageId', '')}",
     )
 
     return json.dumps({

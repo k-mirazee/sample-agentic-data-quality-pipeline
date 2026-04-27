@@ -186,6 +186,27 @@ def scan_quality(table_name: str, partition: str, check_types: list[str] | None 
     # Persist to DynamoDB
     dynamodb_client.put_scan_result(table_name, partition, report)
 
+    # Auto-log scan_initiated
+    dynamodb_client.put_decision(
+        decision_type="scan_initiated",
+        table_name=table_name, partition=partition,
+        context={"checks": checks, "overall_score": overall_score, "overall_status": overall_status},
+        reasoning=f"Automated scan of {table_name} partition {partition} with checks: {', '.join(checks)}",
+        action_taken="scan_quality executed",
+        outcome=f"Score: {overall_score}/100 ({overall_status}), {len(all_violations)} violation(s)",
+    )
+
+    # Auto-log violation_detected if any
+    if all_violations:
+        dynamodb_client.put_decision(
+            decision_type="violation_detected",
+            table_name=table_name, partition=partition,
+            context={"violations": all_violations, "overall_score": overall_score},
+            reasoning=f"Detected {len(all_violations)} violation(s) across dimensions: {', '.join(set(v['dimension'] for v in all_violations))}",
+            action_taken="violations flagged for diagnosis",
+            outcome=f"{overall_status}: {len(all_violations)} violation(s) found",
+        )
+
     # Emit CloudWatch metrics
     metrics.put_overall_score(table_name, overall_score)
     for dim_name, dim in dimensions.items():

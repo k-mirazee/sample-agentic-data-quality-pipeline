@@ -78,6 +78,16 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
     metrics.put_remediation_action(table_name, "quarantine")
     metrics.put_metric("RecordsQuarantined", bad_count, "Count", {"TableName": table_name})
 
+    # Auto-log remediation
+    dynamodb_client.put_decision(
+        decision_type="remediation_executed",
+        table_name=table_name, partition=partition,
+        context={"issue_id": issue_id, "filter_condition": filter_condition},
+        reasoning=f"Quarantining {bad_count:,} records matching: {filter_condition}",
+        action_taken=f"quarantine_records ({bad_count:,} records)",
+        outcome=f"Quarantined to {quarantine_path}",
+    )
+
     return json.dumps({
         "records_quarantined": bad_count,
         "remaining_records": total_count - bad_count,
