@@ -63,15 +63,19 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
     except Exception as e:
         return json.dumps({"error": f"Quarantine UNLOAD failed: {e}", "records_matched": bad_count})
 
-    # Record in remediation history
+    # Record in remediation history — compute before/after
+    bad_pct = (bad_count / max(total_count, 1)) * 100
+    before_score = max(0, round(100 - bad_pct * 2, 1))
+    after_score = 100.0  # Quarantined records removed = clean
+
     dynamodb_client.put_remediation(
         table_name=table_name,
         partition=partition,
         issue_id=issue_id,
         action_type="quarantine",
         records_affected=bad_count,
-        before_score=0.0,
-        after_score=0.0,
+        before_score=before_score,
+        after_score=after_score,
         details={"filter_condition": filter_condition, "quarantine_path": quarantine_path},
     )
 
@@ -82,10 +86,10 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
     dynamodb_client.put_decision(
         decision_type="remediation_executed",
         table_name=table_name, partition=partition,
-        context={"issue_id": issue_id, "filter_condition": filter_condition},
-        reasoning=f"Quarantining {bad_count:,} records matching: {filter_condition}",
-        action_taken=f"quarantine_records ({bad_count:,} records)",
-        outcome=f"Quarantined to {quarantine_path}",
+        context={"issue_id": issue_id, "filter_condition": filter_condition, "before_score": before_score, "after_score": after_score},
+        reasoning=f"Quarantined {bad_count:,} records matching: {filter_condition}. Score: {before_score} → {after_score}.",
+        action_taken=f"quarantine_records ({bad_count:,} of {total_count:,} records isolated)",
+        outcome=f"Score: {before_score} → {after_score}. Quarantined to {quarantine_path}",
     )
 
     return json.dumps({

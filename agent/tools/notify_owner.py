@@ -71,9 +71,9 @@ def notify_owner(issue_id: str, severity: str, message: str) -> str:
     # Auto-log notification
     dynamodb_client.put_decision(
         decision_type="notification_sent",
-        table_name="unknown", partition="unknown",
-        context={"issue_id": issue_id, "severity": severity},
-        reasoning=f"Sending {severity} notification for issue {issue_id[:8]}",
+        table_name="raw_yellow_taxi", partition="",
+        context={"issue_id": issue_id, "severity": severity, "message_preview": message[:200]},
+        reasoning=f"{severity.upper()} alert sent for issue {issue_id[:8]}: {message[:100]}",
         action_taken=f"SNS publish ({severity})",
         outcome=f"Delivered: {resp.get('MessageId', '')}",
     )

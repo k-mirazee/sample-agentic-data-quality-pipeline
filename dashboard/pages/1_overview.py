@@ -3,7 +3,7 @@
 import streamlit as st
 import pandas as pd
 
-from dashboard.utils.dynamodb import get_all_scans, get_recent_decisions
+from dashboard.utils.dynamodb import get_all_scans, get_recent_decisions, get_all_remediations
 from dashboard.utils.cloudwatch import get_alarm_states
 
 st.set_page_config(page_title="Overview", page_icon="📊", layout="wide")
@@ -60,3 +60,22 @@ col1.metric("Total Scans", len(scans))
 col2.metric("Total Decisions", len(decisions))
 col3.metric("Avg Score", f"{sum(s.get('overall_score', 0) for s in scans) / max(len(scans), 1):.1f}" if scans else "N/A")
 col4.metric("Active Alarms", sum(1 for a in alarms if a["state"] == "ALARM"))
+
+# --- Remediation Impact ---
+st.subheader("🔧 Remediation Impact")
+remediations = get_all_remediations(limit=50)
+if remediations:
+    scored = [r for r in remediations if r.get("before_score", 0) > 0 or r.get("after_score", 0) > 0]
+    if scored:
+        rem_df = pd.DataFrame([{
+            "Timestamp": r.get("SK", "")[:19],
+            "Action": r.get("action_type", ""),
+            "Records Fixed": r.get("records_affected", 0),
+            "Before Score": r.get("before_score", 0),
+            "After Score": r.get("after_score", 0),
+        } for r in scored])
+        st.dataframe(rem_df, use_container_width=True, hide_index=True)
+    else:
+        st.info("Remediations recorded but no before/after scores yet.")
+else:
+    st.info("No remediations yet.")
