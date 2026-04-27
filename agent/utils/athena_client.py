@@ -57,9 +57,11 @@ def run_query(sql: str, database: str | None = None) -> list[dict]:
     paginator = client.get_paginator("get_query_results")
     for page in paginator.paginate(QueryExecutionId=query_id):
         result_rows = page["ResultSet"]["Rows"]
+        if not result_rows:
+            continue
         if columns is None:
             # First row is header
-            columns = [col["VarCharValue"] for col in result_rows[0]["Data"]]
+            columns = [col.get("VarCharValue", f"col_{i}") for i, col in enumerate(result_rows[0]["Data"])]
             result_rows = result_rows[1:]
         for row in result_rows:
             record = {}

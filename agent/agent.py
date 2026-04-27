@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(levelname)s | %(name)s | %(message)s", level=logging.INFO)
 
 # --- OpenTelemetry ---
-OTEL_ENABLED = os.getenv("OTEL_ENABLED", "true").lower() == "true"
+OTEL_ENABLED = os.getenv("OTEL_ENABLED", "false").lower() == "true"
 if OTEL_ENABLED:
     try:
         from strands.telemetry.config import StrandsTelemetry

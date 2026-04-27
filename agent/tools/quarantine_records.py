@@ -34,25 +34,31 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
     run_ts = uuid.uuid4().hex[:8]
     quarantine_path = f"s3://{S3_BUCKET}/quarantine/{table_name}/{partition}/issue_id={issue_id}/{run_ts}/"
 
-    # Count bad records first
-    count_sql = f"SELECT COUNT(*) AS cnt FROM {DATABASE}.{table_name} WHERE {where} AND ({filter_condition})"
-    rows, _ = athena_client.run_query(count_sql)
-    bad_count = rows[0]["cnt"] if rows else 0
+    try:
+        # Count bad records first
+        count_sql = f"SELECT COUNT(*) AS cnt FROM {DATABASE}.{table_name} WHERE {where} AND ({filter_condition})"
+        rows, _ = athena_client.run_query(count_sql)
+        bad_count = rows[0]["cnt"] if rows else 0
+    except Exception as e:
+        return json.dumps({"error": f"Failed to count records: {e}", "filter_condition": filter_condition})
 
     if bad_count == 0:
         return json.dumps({"records_quarantined": 0, "message": "No records match filter condition"})
 
-    # Count total records
-    total_sql = f"SELECT COUNT(*) AS cnt FROM {DATABASE}.{table_name} WHERE {where}"
-    total_rows, _ = athena_client.run_query(total_sql)
-    total_count = total_rows[0]["cnt"] if total_rows else 0
+    try:
+        # Count total records
+        total_sql = f"SELECT COUNT(*) AS cnt FROM {DATABASE}.{table_name} WHERE {where}"
+        total_rows, _ = athena_client.run_query(total_sql)
+        total_count = total_rows[0]["cnt"] if total_rows else 0
 
-    # UNLOAD bad records to quarantine path
-    unload_sql = (
-        f"UNLOAD (SELECT * FROM {DATABASE}.{table_name} WHERE {where} AND ({filter_condition})) "
-        f"TO '{quarantine_path}' WITH (format = 'PARQUET')"
-    )
-    athena_client.run_query(unload_sql)
+        # UNLOAD bad records to quarantine path
+        unload_sql = (
+            f"UNLOAD (SELECT * FROM {DATABASE}.{table_name} WHERE {where} AND ({filter_condition})) "
+            f"TO '{quarantine_path}' WITH (format = 'PARQUET')"
+        )
+        athena_client.run_query(unload_sql)
+    except Exception as e:
+        return json.dumps({"error": f"Quarantine UNLOAD failed: {e}", "records_matched": bad_count})
 
     # Record in remediation history
     dynamodb_client.put_remediation(
