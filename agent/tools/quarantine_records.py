@@ -68,8 +68,7 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
 
     # Record in remediation history — use actual scan score
     recent = dynamodb_client.get_recent_scans(table_name, partition, limit=1)
-    before_score = round(recent[0].get("overall_score", 0), 1) if recent else 0.0
-    remaining_pct = ((total_count - bad_count) / max(total_count, 1)) * 100
+    before_score = float(recent[0].get("overall_score", 0)) if recent else 0.0
     after_score = min(100.0, round(before_score + (bad_count / max(total_count, 1)) * 50, 1))
 
     dynamodb_client.put_remediation(

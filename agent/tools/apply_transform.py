@@ -108,7 +108,7 @@ def apply_transform(table_name: str, partition: str, transform_type: str, transf
 
     # --- Use actual scan score as before ---
     recent = dynamodb_client.get_recent_scans(table_name, partition, limit=1)
-    before_score = round(recent[0].get("overall_score", 0), 1) if recent else 0.0
+    before_score = float(recent[0].get("overall_score", 0)) if recent else 0.0
 
     # After transform, estimate improvement based on what was fixed
     if transform_type == "fill_nulls":
