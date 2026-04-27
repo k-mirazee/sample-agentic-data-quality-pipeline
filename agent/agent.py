@@ -14,6 +14,22 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(levelname)s | %(name)s | %(message)s", level=logging.INFO)
 
+# --- OpenTelemetry ---
+OTEL_ENABLED = os.getenv("OTEL_ENABLED", "true").lower() == "true"
+if OTEL_ENABLED:
+    try:
+        from strands.telemetry.config import StrandsTelemetry
+
+        os.environ.setdefault("OTEL_SERVICE_NAME", "dq-agent")
+        telemetry = StrandsTelemetry()
+        telemetry.setup_otlp_exporter()
+        telemetry.setup_meter(enable_otlp_exporter=True)
+        logger.info("OpenTelemetry initialized (service=dq-agent)")
+    except Exception as e:
+        logger.warning("OpenTelemetry setup failed: %s", e)
+else:
+    logger.info("OpenTelemetry disabled (OTEL_ENABLED=false)")
+
 # --- Configuration ---
 MODEL_ID = os.getenv("MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
 REGION = os.getenv("AWS_REGION", "us-east-1")

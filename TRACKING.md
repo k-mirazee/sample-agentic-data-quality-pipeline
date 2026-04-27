@@ -36,6 +36,10 @@
 - **Next:** Slice 8 — Observability (OpenTelemetry, CloudWatch alarms/dashboard)
 - **Session ended:** 2026-04-24 ~14:56 CDT
 
+### Session 3 — 2026-04-27
+- Completed Slice 8: Observability — OTEL init in agent.py, 3 CloudWatch alarms + dashboard deployed
+- **Next:** Slice 9 — Streamlit dashboard (5 pages)
+
 ### Pickup Instructions for Next Session
 1. Read this file: `~/sample-agentic-data-quality-pipeline/TRACKING.md`
 2. Read the spec: `~/Desktop/SPEC-agentic-data-quality-pipeline.md`
@@ -94,7 +98,7 @@
 | 5 | First tools — scan_quality + check_schema + log_decision. Deploy 3b → deploy agent → test | ✅ DONE | Commit bf42fd8. Agent scanned real data successfully. |
 | 6 | Smoke test — clean data scan → OK. Chaos data scan → violations detected. Validates core loop before remediation | ✅ DONE | Agent detected schema drift on chaos data, pivoted to check_schema, flagged CRITICAL. |
 | 7 | Remaining tools — diagnose_issue, quarantine_records, apply_transform, notify_owner | ✅ DONE | All 7 tools working. 14 tool calls in full loop. |
-| 8 | Observability — OpenTelemetry, CloudWatch metrics/alarms/dashboard | NOT STARTED | |
+| 8 | Observability — OpenTelemetry, CloudWatch metrics/alarms/dashboard | ✅ DONE | OTEL init + 3 alarms + dashboard deployed. |
 | 9 | Streamlit dashboard — 5 pages reading from DDB + CloudWatch | NOT STARTED | |
 | 10 | Polish — README, DEMO_GUIDE, ARCHITECTURE.md, integration tests | NOT STARTED | |
 
