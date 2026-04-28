@@ -14,6 +14,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 BUCKET = os.getenv("S3_BUCKET", "dq-agent-demo-015331669295")
 UV = os.path.expanduser("~/.local/bin/uv")
 
+AGENT_ARN = "arn:aws:bedrock-agentcore:us-east-1:015331669295:runtime/dq_agent-dl3UfNEcb1"
+
 PARTITIONS = [
     "year=2025/month=09",
     "year=2025/month=08",
@@ -23,7 +25,7 @@ PARTITIONS = [
 
 # --- Scan Now ---
 st.subheader("🔍 Run Agent Scan")
-st.caption("The agent autonomously scans, diagnoses, remediates, and reports what it fixed.")
+st.caption("Agent runs on **Amazon Bedrock AgentCore** — not locally.")
 scan_partition = st.selectbox("Partition to scan", PARTITIONS, key="scan_part")
 if st.button("🚀 Scan Now", type="primary"):
     prompt = (
@@ -34,60 +36,32 @@ if st.button("🚀 Scan Now", type="primary"):
         f"Log every decision."
     )
     status = st.empty()
-    progress = st.progress(0, text="Starting agent...")
-    log_area = st.container()
+    status.info(f"🚀 **Agent running on Bedrock AgentCore...**\n\n`{AGENT_ARN}`\n\nThis typically takes 30-60 seconds.")
 
-    proc = subprocess.Popen(
-        [UV, "run", "python", "-m", "agent.agent",
-         "--table", "raw_yellow_taxi", "--partition", scan_partition,
-         "--prompt", prompt],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        text=True, cwd=PROJECT_ROOT, bufsize=1,
-        env={**os.environ, "PYTHONPATH": PROJECT_ROOT, "PYTHONUNBUFFERED": "1"},
+    import json as _json
+    payload = _json.dumps({"prompt": prompt})
+    result = subprocess.run(
+        ["agentcore", "invoke", "--agent", "dq_agent", payload],
+        capture_output=True, text=True,
+        cwd=os.path.join(PROJECT_ROOT, "agent"), timeout=300,
     )
 
-    tool_count = 0
-    steps = {
-        "scan_quality": ("🔍 Scanning data quality...", 15),
-        "log_decision": ("📝 Logging decision...", None),
-        "diagnose_issue": ("🧠 Diagnosing root cause...", 40),
-        "check_schema": ("📋 Checking schema...", 30),
-        "quarantine_records": ("🔒 Quarantining bad records...", 60),
-        "apply_transform": ("🔧 Applying transform...", 70),
-        "notify_owner": ("📨 Sending notification...", 85),
-    }
-
-    output_lines = []
-    for line in proc.stdout:
-        output_lines.append(line)
-        stripped = line.strip()
-
-        # Detect tool calls from various output patterns
-        matched = False
-        for tool_name, (msg, pct) in steps.items():
-            if tool_name in stripped:
-                tool_count += 1
-                status.info(f"**Step {tool_count}:** {msg}")
-                if pct:
-                    progress.progress(pct, text=msg)
-                matched = True
-                break
-
-        # Also show agent thinking lines
-        if not matched and stripped and not stripped.startswith(("INFO", "WARNING", "ERROR")):
-            if len(stripped) > 20 and not stripped.startswith("{"):
-                status.info(f"🤖 {stripped[:100]}..."  if len(stripped) > 100 else f"🤖 {stripped}")
-
-    proc.wait()
-    progress.progress(100, text="✅ Complete!")
-
-    if proc.returncode == 0:
-        status.success(f"✅ Agent completed — {tool_count} tool calls. Check Overview and Remediation History.")
+    if result.returncode == 0:
+        status.success("✅ **Agent completed on AgentCore.** Check Dashboard and Agent Activity pages.")
+        with st.expander("Agent response"):
+            # Extract just the response text
+            output = result.stdout
+            if "Response:" in output:
+                output = output.split("Response:", 1)[1].strip()
+            st.markdown(output[:5000])
     else:
-        status.error("❌ Agent failed")
-
-    with st.expander("Full agent output"):
-        st.text("".join(output_lines[-200:]))
+        stderr = result.stderr or result.stdout
+        if "RuntimeClientError" in stderr:
+            status.error("❌ AgentCore runtime error — check CloudWatch logs")
+        else:
+            status.error("❌ Invocation failed")
+        with st.expander("Error details"):
+            st.text(stderr[-2000:])
 
 st.markdown("---")
 
