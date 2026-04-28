@@ -135,7 +135,8 @@ st.markdown("---")
 
 # --- Restore Clean Data ---
 st.subheader("🔄 Restore Clean Data")
-if st.button("🔄 Restore All Partitions to Clean Data"):
+clear_ddb = st.checkbox("Also clear all scan history, decisions, and quarantine records", value=True)
+if st.button("🔄 Restore Everything"):
     with st.spinner("Restoring clean data..."):
         result = subprocess.run(
             [UV, "run", "python", "data/upload_to_s3.py",
@@ -144,7 +145,27 @@ if st.button("🔄 Restore All Partitions to Clean Data"):
             capture_output=True, text=True, cwd=PROJECT_ROOT, timeout=120,
         )
     if result.returncode == 0:
-        st.success("✅ Clean data restored to all partitions.")
+        if clear_ddb:
+            with st.spinner("Clearing DynamoDB tables..."):
+                subprocess.run(
+                    [UV, "run", "python", "-c", """
+import boto3
+region = "us-east-1"
+ddb = boto3.resource("dynamodb", region_name=region)
+for name in ["quality-scan-results", "agent-decisions", "schema-baselines", "remediation-history"]:
+    table = ddb.Table(name)
+    scan = table.scan(ProjectionExpression="PK, SK")
+    with table.batch_writer() as batch:
+        for item in scan.get("Items", []):
+            batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+    print(f"Cleared {name}: {len(scan.get('Items', []))} items")
+"""],
+                    capture_output=True, text=True, cwd=PROJECT_ROOT, timeout=60,
+                    env={**os.environ, "PYTHONPATH": PROJECT_ROOT},
+                )
+            st.success("✅ Clean data restored and all history cleared. Fresh start!")
+        else:
+            st.success("✅ Clean data restored (history preserved).")
     else:
         st.error("Restore failed")
         st.text(result.stderr)

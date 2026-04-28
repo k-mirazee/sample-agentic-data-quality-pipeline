@@ -5,11 +5,23 @@ import json
 import streamlit as st
 import pandas as pd
 
-from dashboard.utils.dynamodb import get_all_scans, get_all_remediations
+from dashboard.utils.dynamodb import get_all_scans, get_all_remediations, get_recent_decisions
 from dashboard.utils.cloudwatch import get_alarm_states
 
 st.set_page_config(page_title="Dashboard", page_icon="📊", layout="wide")
 st.title("📊 Dashboard")
+
+# --- Check for recent failed scans (schema mismatch etc) ---
+decisions = get_recent_decisions(limit=10)
+recent_failures = [d for d in decisions if d.get("decision_type") in ("schema_check_initiated", "diagnosis_complete")
+                   and "mismatch" in str(d.get("reasoning", "")).lower()]
+if recent_failures:
+    latest_failure = recent_failures[0]
+    st.error(
+        f"⚠️ **Latest scan failed — schema mismatch detected**\n\n"
+        f"{latest_failure.get('reasoning', '')[:300]}\n\n"
+        f"See **Agent Activity** for full details."
+    )
 
 # --- Alarm Status ---
 alarms = get_alarm_states()
