@@ -1,4 +1,4 @@
-"""DynamoDB query helpers for the Streamlit dashboard."""
+"""DynamoDB query helpers for the dashboard backend."""
 
 import os
 from decimal import Decimal

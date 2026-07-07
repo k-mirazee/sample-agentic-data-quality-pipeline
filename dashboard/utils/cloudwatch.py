@@ -1,4 +1,4 @@
-"""CloudWatch metric query helpers for the Streamlit dashboard."""
+"""CloudWatch alarm state helpers for the dashboard backend."""
 
 import os
 from datetime import datetime, timedelta, timezone
