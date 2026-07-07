@@ -43,8 +43,14 @@ htmlcov/
 # mypy
 .mypy_cache/
 
-# Streamlit
-.streamlit/
+# Frontend
+node_modules/
 
 # Ruff
 .ruff_cache/
+
+# AgentCore (auto-generated per account)
+.bedrock_agentcore.yaml
+
+# Development tracking (internal)
+TRACKING.md
