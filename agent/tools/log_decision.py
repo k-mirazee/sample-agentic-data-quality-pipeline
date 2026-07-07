@@ -17,7 +17,8 @@ def log_decision(decision_type: str, context: dict, reasoning: str, action_taken
     Must be called at every major decision point. This is mandatory, not optional.
 
     Args:
-        decision_type: E.g. 'scan_initiated', 'violation_detected', 'diagnosis_complete', 'remediation_executed', 'notification_sent'
+        decision_type: E.g. 'scan_initiated', 'violation_detected', 'diagnosis_complete',
+            'remediation_executed', 'notification_sent'
         context: Relevant context (table, partition, violation details)
         reasoning: The agent's explanation of why it chose this action
         action_taken: What the agent did

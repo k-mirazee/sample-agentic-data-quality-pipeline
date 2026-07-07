@@ -48,21 +48,19 @@ else:
 
 # --- Tool imports (support both local package and container flat layout) ---
 try:
-    from agent.tools.scan_quality import scan_quality
-    from agent.tools.check_schema import check_schema
-    from agent.tools.log_decision import log_decision
     from agent.tools.diagnose_issue import diagnose_issue
-    from agent.tools.quarantine_records import quarantine_records
+    from agent.tools.log_decision import log_decision
     from agent.tools.notify_owner import notify_owner
+    from agent.tools.parse_dq_event import parse_dq_event
+    from agent.tools.quarantine_records import quarantine_records
 except ImportError:
-    from tools.scan_quality import scan_quality
-    from tools.check_schema import check_schema
-    from tools.log_decision import log_decision
     from tools.diagnose_issue import diagnose_issue
-    from tools.quarantine_records import quarantine_records
+    from tools.log_decision import log_decision
     from tools.notify_owner import notify_owner
+    from tools.parse_dq_event import parse_dq_event
+    from tools.quarantine_records import quarantine_records
 
-TOOLS = [scan_quality, check_schema, log_decision, diagnose_issue, quarantine_records, notify_owner]
+TOOLS = [parse_dq_event, diagnose_issue, quarantine_records, notify_owner, log_decision]
 
 # --- Agent ---
 _agent = None
@@ -138,13 +136,30 @@ def main():
 
     parser = argparse.ArgumentParser(description="Data Quality Guardian Agent")
     parser.add_argument("--table", default="raw_yellow_taxi", help="Glue table name")
-    parser.add_argument("--partition", default="year=2024/month=01", help="Partition spec")
-    parser.add_argument("--prompt", help="Custom prompt (overrides default scan prompt)")
+    parser.add_argument("--partition", default="year=2025/month=09", help="Partition spec")
+    parser.add_argument("--prompt", help="Custom prompt (overrides the default mock DQ event)")
     args = parser.parse_args()
 
+    # The agent responds to Glue DQ results; it does not scan. Default to a
+    # mock evaluation event so local runs exercise the real workflow.
+    mock_event = {
+        "evaluation_id": "dqresult-local-test",
+        "database": os.getenv("GLUE_DATABASE", "dq_agent_demo"),
+        "table": args.table,
+        "partition": args.partition,
+        "overall_state": "FAILED",
+        "rule_results": [
+            {
+                "rule": 'Completeness "passenger_count" >= 0.70',
+                "state": "FAILED",
+                "evaluated_metrics": {"Column.passenger_count.Completeness": 0.64},
+                "description": "Completeness check failed — 36% null passenger_count",
+            }
+        ],
+    }
     prompt = args.prompt or (
-        f"Scan the table {args.table} partition {args.partition} for data quality issues. "
-        f"Run all check types and report your findings."
+        f"Glue DQ evaluation on {args.table} partition {args.partition} has FAILED. "
+        f"Process the following evaluation results:\n\n{json.dumps(mock_event)}"
     )
 
     logger.info("Running locally: table=%s, partition=%s", args.table, args.partition)

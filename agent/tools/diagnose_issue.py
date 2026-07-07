@@ -24,7 +24,8 @@ def _get_client():
     return _client
 
 
-DIAGNOSTIC_PROMPT = """You are a data quality diagnostic engine. Given a quality violation, determine the root cause and recommend an action.
+DIAGNOSTIC_PROMPT = """You are a data quality diagnostic engine. Given a quality violation,
+determine the root cause and recommend an action.
 
 Violation details:
 {violation_json}
@@ -36,7 +37,7 @@ Respond with ONLY valid JSON matching this schema:
 {{
   "probable_cause": "string — explanation of what likely caused this issue",
   "confidence": "HIGH|MEDIUM|LOW",
-  "recommended_action": "quarantine_and_notify|transform_and_promote|notify_only|auto_resolve",
+  "recommended_action": "quarantine_and_notify|notify_only|auto_resolve",
   "action_details": {{
     "description": "string — specific steps to take"
   }},
@@ -77,12 +78,14 @@ def diagnose_issue(violation: dict, historical_context: dict | None = None) -> s
         modelId=MODEL_ID,
         contentType="application/json",
         accept="application/json",
-        body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 1024,
-            "temperature": 0.2,
-            "messages": [{"role": "user", "content": prompt}],
-        }),
+        body=json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 1024,
+                "temperature": 0.2,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+        ),
     )
 
     body = json.loads(resp["body"].read())

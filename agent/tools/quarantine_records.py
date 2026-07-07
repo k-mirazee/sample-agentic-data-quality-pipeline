@@ -12,7 +12,19 @@ except ImportError:
     from utils import athena_client, dynamodb_client, metrics
 
 DATABASE = os.getenv("GLUE_DATABASE", "dq_agent_demo")
-S3_BUCKET = os.getenv("S3_BUCKET", "dq-agent-demo-015331669295")
+
+
+def _resolve_bucket() -> str:
+    bucket = os.getenv("S3_BUCKET")
+    if bucket:
+        return bucket
+    import boto3
+
+    account_id = boto3.client("sts").get_caller_identity()["Account"]
+    return f"dq-agent-demo-{account_id}"
+
+
+S3_BUCKET = _resolve_bucket()
 
 
 @tool
@@ -32,7 +44,14 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
         JSON with records_quarantined count, quarantine_path, and remaining_records count.
     """
     issue_id = issue_id or str(uuid.uuid4())
-    parts = partition.split("/")
+    parts = [p for p in partition.split("/") if "=" in p]
+    if not parts:
+        return json.dumps(
+            {
+                "error": f"Invalid partition spec: {partition!r}. Expected 'key=value/key=value' "
+                "(e.g. 'year=2025/month=09'). Refusing to quarantine without a partition scope."
+            }
+        )
     where = " AND ".join(f"{p.split('=')[0]}='{p.split('=')[1]}'" for p in parts)
     run_ts = uuid.uuid4().hex[:8]
     quarantine_path = f"s3://{S3_BUCKET}/quarantine/{table_name}/{partition}/issue_id={issue_id}/{run_ts}/"
@@ -88,16 +107,25 @@ def quarantine_records(table_name: str, partition: str, filter_condition: str, i
     # Auto-log remediation
     dynamodb_client.put_decision(
         decision_type="remediation_executed",
-        table_name=table_name, partition=partition,
-        context={"issue_id": issue_id, "filter_condition": filter_condition, "before_score": before_score, "after_score": after_score},
-        reasoning=f"Quarantined {bad_count:,} records matching: {filter_condition}. Score: {before_score} → {after_score}.",
+        table_name=table_name,
+        partition=partition,
+        context={
+            "issue_id": issue_id,
+            "filter_condition": filter_condition,
+            "before_score": before_score,
+            "after_score": after_score,
+        },
+        reasoning=f"Quarantined {bad_count:,} records matching: {filter_condition}. "
+        f"Score: {before_score} → {after_score}.",
         action_taken=f"quarantine_records ({bad_count:,} of {total_count:,} records isolated)",
         outcome=f"Score: {before_score} → {after_score}. Quarantined to {quarantine_path}",
     )
 
-    return json.dumps({
-        "records_quarantined": bad_count,
-        "remaining_records": total_count - bad_count,
-        "quarantine_path": quarantine_path,
-        "issue_id": issue_id,
-    })
+    return json.dumps(
+        {
+            "records_quarantined": bad_count,
+            "remaining_records": total_count - bad_count,
+            "quarantine_path": quarantine_path,
+            "issue_id": issue_id,
+        }
+    )
