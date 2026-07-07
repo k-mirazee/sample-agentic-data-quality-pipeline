@@ -2,7 +2,8 @@
 """Chaos Injector — Introduces controlled data quality issues into Parquet datasets.
 
 Usage:
-    python data/chaos_injector.py --input data/raw/yellow_tripdata_2024-01.parquet --output data/chaos/yellow_tripdata_2024-01.parquet
+    python data/chaos_injector.py --input data/raw/yellow_tripdata_2024-01.parquet \
+        --output data/chaos/yellow_tripdata_2024-01.parquet
     python data/chaos_injector.py --input data/raw/ --output data/chaos/
 """
 
@@ -12,6 +13,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 import yaml
 
 
@@ -28,7 +31,7 @@ def inject_nulls(df: pd.DataFrame, config: dict, rng: np.random.Generator) -> pd
         if col in df.columns:
             mask = rng.random(len(df)) < rate
             df.loc[mask, col] = None
-            print(f"  [null] {col}: {mask.sum():,} rows ({rate*100:.1f}%)")
+            print(f"  [null] {col}: {mask.sum():,} rows ({rate * 100:.1f}%)")
     return df
 
 
@@ -46,7 +49,7 @@ def inject_outliers(df: pd.DataFrame, config: dict, rng: np.random.Generator) ->
         else:
             values = rng.uniform(rule["min"], rule["max"], size=n)
         df.loc[mask, col] = values
-        print(f"  [outlier] {col}: {n:,} rows ({rate*100:.1f}%)")
+        print(f"  [outlier] {col}: {n:,} rows ({rate * 100:.1f}%)")
     return df
 
 
@@ -84,7 +87,7 @@ def inject_duplicates(df: pd.DataFrame, config: dict, rng: np.random.Generator) 
     if n_near > 0:
         idx = rng.choice(len(df), size=n_near, replace=True)
         near = df.iloc[idx].copy()
-        for col in near.select_dtypes(include=[np.number]).columns[:3]:
+        for col in near.select_dtypes(include=["float64"]).columns[:3]:
             near[col] = near[col] + rng.normal(0, 0.01, size=n_near)
         df = pd.concat([df, near], ignore_index=True)
         print(f"  [duplicate] {n_near:,} near-duplicates")
@@ -112,13 +115,32 @@ def inject_format_violations(df: pd.DataFrame, config: dict, rng: np.random.Gene
             continue
         mask = rng.random(len(df)) < rate
         df.loc[mask, col] = rng.choice(rule["inject_values"], size=mask.sum())
-        print(f"  [format] {col}: {mask.sum():,} rows ({rate*100:.1f}%)")
+        print(f"  [format] {col}: {mask.sum():,} rows ({rate * 100:.1f}%)")
+    return df
+
+
+def restore_integer_dtypes(df: pd.DataFrame, original_schema: pa.Schema) -> pd.DataFrame:
+    """Cast integer columns back to nullable integer dtypes after injection.
+
+    Pandas silently upcasts int columns to float64 when nulls are injected;
+    writing that back produces parquet files whose physical types (DOUBLE)
+    conflict with the Glue catalog (bigint/int), and Athena and Glue DQ then
+    refuse to read the partition (HIVE_BAD_DATA). Nullable Int32/Int64 keep
+    the physical schema stable while still carrying the injected nulls.
+    """
+    for field in original_schema:
+        if field.name not in df.columns or not pa.types.is_integer(field.type):
+            continue
+        target = "Int32" if field.type.bit_width <= 32 else "Int64"
+        if str(df[field.name].dtype) != target:
+            df[field.name] = pd.to_numeric(df[field.name], errors="coerce").round().astype(target)
     return df
 
 
 def run_chaos(input_path: str, output_path: str, config: dict) -> dict:
     """Apply all configured chaos injections to a Parquet file."""
     print(f"\nProcessing: {input_path}")
+    original_schema = pq.read_schema(input_path)
     df = pd.read_parquet(input_path)
     original_rows = len(df)
     print(f"  Original: {original_rows:,} rows, {len(df.columns)} columns")
@@ -131,6 +153,8 @@ def run_chaos(input_path: str, output_path: str, config: dict) -> dict:
     df = inject_freshness_issues(df, config.get("freshness_issues", {}), rng)
     df = inject_format_violations(df, config.get("format_violations", {}), rng)
     df = inject_schema_drift(df, config.get("schema_drift", {}))  # Last — may change columns
+
+    df = restore_integer_dtypes(df, original_schema)
 
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     df.to_parquet(output_path, index=False)

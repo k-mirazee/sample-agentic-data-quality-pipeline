@@ -35,8 +35,12 @@ chaos_config:
         max: 100000.0
         inject_rate: 0.01
 
+  # Disabled: catalog-based Glue DQ evaluations read through the static catalog
+  # schema, so drift is invisible to ColumnExists rules — and type changes make
+  # the partition unreadable by Athena/Spark (HIVE_BAD_DATA), which breaks both
+  # the evaluation run and quarantine.
   schema_drift:
-    enabled: true
+    enabled: false
     actions:
       - type: rename_column
         from_name: fare_amount
@@ -56,8 +60,11 @@ chaos_config:
     exact_duplicates: 0.03
     near_duplicates: 0.02
 
+  # Disabled: the demo dataset is historical (2025 TLC data), so a wall-clock
+  # DataFreshness rule can never pass on clean data and backdating by days
+  # changes nothing. Freshness is demonstrated via the simulate-event path.
   freshness_issues:
-    enabled: true
+    enabled: false
     backdate_days: 7
     affected_rate: 0.10
 
