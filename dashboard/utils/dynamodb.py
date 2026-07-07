@@ -43,7 +43,13 @@ def get_recent_scans(table_name: str, partition: str, limit: int = 20) -> list[d
 
 def get_all_scans(limit: int = 100) -> list[dict]:
     resp = _get_table(TABLE_SCAN_RESULTS).scan(Limit=limit)
-    return sorted([_deserialize(i) for i in resp.get("Items", [])], key=lambda x: x.get("SK", ""), reverse=True)
+    items = sorted([_deserialize(i) for i in resp.get("Items", [])], key=lambda x: x.get("SK", ""), reverse=True)
+    # PK is "table#partition"; expose the parts the UI renders
+    for item in items:
+        table, _, partition = item.get("PK", "").partition("#")
+        item.setdefault("table", table)
+        item.setdefault("partition", partition)
+    return items
 
 
 def get_recent_decisions(limit: int = 50) -> list[dict]:
