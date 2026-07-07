@@ -1,151 +1,197 @@
-# sample-agentic-data-quality-pipeline
+# Agentic Data Quality Pipeline
 
-A Strands Agent deployed on Amazon Bedrock AgentCore that autonomously monitors data quality in an S3 data lake, detects anomalies (schema drift, null spikes, distribution shifts), diagnoses root causes via LLM reasoning, quarantines bad records, and alerts pipeline owners — with full observability tracing every decision.
+An autonomous agent that responds to data quality violations in your S3 data lake. AWS Glue Data Quality detects issues (null spikes, stale data, distribution outliers, schema drift). A Strands Agent on Amazon Bedrock AgentCore diagnoses root causes via LLM reasoning, quarantines bad records, and alerts pipeline owners — with every decision traced and auditable.
 
-## Architecture
+**The key idea:** Glue DQ tells you *something is wrong*. The agent tells you *why* and *takes action*.
+
+![Architecture Diagram](docs/images/architecture-diagram.png)
+
+## How It Works
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        S3 DATA LAKE                             │
-│  raw/ ──▶ staging/ ──▶ curated/     quarantine/                 │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│          🤖 DATA QUALITY AGENT (Strands + AgentCore)            │
-│                                                                 │
-│  Tools: scan_quality │ check_schema │ diagnose_issue            │
-│         quarantine_records │ notify_owner │ log_decision        │
-│                                                                 │
-│  OpenTelemetry ──▶ CloudWatch / X-Ray                           │
-└──────┬──────┬──────┬──────┬──────┬──────────────────────────────┘
-       │      │      │      │      │
-       ▼      ▼      ▼      ▼      ▼
-    Athena  Glue  DynamoDB  CW    SNS
-                  (4 tbls)
-       │
-       ▼
-  Streamlit Dashboard (3 pages)
+Bad data lands in S3
+  → Glue DQ evaluates DQDL ruleset → detects violations
+    → EventBridge routes failure event → Lambda bridge
+      → AgentCore invokes the agent
+        → Agent diagnoses root cause (LLM reasoning)
+          → Quarantines bad records to isolation zone
+            → Sends SNS alert with diagnosis
+              → Logs every decision to DynamoDB
 ```
-
-## Features
-
-- **Autonomous scanning** — Athena SQL checks for completeness, freshness, and distribution anomalies
-- **Schema drift detection** — Compares Glue Catalog against stored baselines, detects renames via string similarity
-- **LLM-powered diagnosis** — Separate Bedrock call per violation for focused root cause analysis
-- **Quarantine isolation** — Bad records moved to quarantine zone via Athena UNLOAD, tracked in DynamoDB
-- **Alert notifications** — SNS alerts with severity levels (CRITICAL/WARNING/INFO) and recommended next steps
-- **Full observability** — OpenTelemetry traces, CloudWatch metrics/alarms/dashboard, DynamoDB audit trail
-- **Real data** — NYC TLC yellow taxi trip data (3-4M rows/month)
-- **Chaos injector** — Controlled quality issue injection (nulls, outliers, schema drift, duplicates) for demos
-- **Streamlit dashboard** — 3-page UI with control panel, quality dashboard, and agent activity timeline
 
 ## Prerequisites
 
-- AWS account with Bedrock model access (Claude Haiku 4.5)
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) package manager
-- AWS CDK v2
-- `agentcore` CLI (for AgentCore deployment)
+| Requirement | Why |
+|---|---|
+| AWS account | All infrastructure runs here |
+| [Python 3.11+](https://www.python.org/downloads/) | Agent and CDK code |
+| [uv](https://docs.astral.sh/uv/getting-started/installation/) | Python package manager |
+| [Node.js 18+](https://nodejs.org/) | CDK CLI and dashboard frontend |
+| [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) | Configured with credentials (`aws configure`) |
+| [AWS CDK v2](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html) | `npm install -g aws-cdk` |
+| Bedrock model access | Enable **Claude Haiku 4.5** in us-east-1 via the [Bedrock console](https://console.aws.amazon.com/bedrock/home#/modelaccess) |
+| [agentcore CLI](https://docs.aws.amazon.com/bedrock/latest/userguide/agentcore-get-started.html) | For deploying the agent runtime |
 
-## Quick Start
+## Setup (One-Time)
 
-### 1. Clone and install
+### 1. Clone and install dependencies
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/aws-samples/sample-agentic-data-quality-pipeline.git
 cd sample-agentic-data-quality-pipeline
 uv sync --all-extras
+cd dashboard/ui && npm install && cd ../..
 ```
 
-### 2. Deploy infrastructure
+### 2. Bootstrap CDK (if you haven't already in this account/region)
+
+```bash
+npx cdk bootstrap aws://$(aws sts get-caller-identity --query Account --output text)/us-east-1
+```
+
+### 3. Deploy all infrastructure
 
 ```bash
 cd cdk
-uv run --extra cdk -- npx cdk bootstrap aws://<ACCOUNT_ID>/us-east-1
 uv run --extra cdk -- npx cdk deploy --app "python3 app.py" --all --require-approval never
+cd ..
 ```
 
-This creates: S3 bucket, Glue database + 4 tables, Athena workgroup, 4 DynamoDB tables, SNS topic, CloudWatch alarms + dashboard.
+This creates: S3 bucket, Glue database + tables, Glue DQ ruleset, EventBridge rule, Lambda bridge, Athena workgroup, DynamoDB tables, SNS topic, CloudWatch alarms + dashboard.
 
-### 3. Download and upload data
+### 4. Download sample data and upload to S3
 
 ```bash
+# Download 3 months of NYC TLC yellow taxi data (~150MB)
 uv run python data/download_data.py --start-year 2025 --start-month 7 --num-months 3
-uv run python data/upload_to_s3.py --source data/raw --bucket dq-agent-demo-<ACCOUNT_ID> --prefix raw/yellow_taxi
+
+# Get your bucket name (auto-created as dq-agent-demo-<ACCOUNT_ID>)
+BUCKET="dq-agent-demo-$(aws sts get-caller-identity --query Account --output text)"
+
+# Upload to S3 with Hive-style partitioning
+uv run python data/upload_to_s3.py --source data/raw --bucket $BUCKET --prefix raw/yellow_taxi
 ```
 
-Add Glue partitions for each month (see [Demo Guide](docs/DEMO_GUIDE.md)).
+### 5. Add Glue partitions
 
-### 4. Deploy agent to AgentCore
+```bash
+BUCKET="dq-agent-demo-$(aws sts get-caller-identity --query Account --output text)"
+for MONTH in 07 08 09; do
+  aws glue create-partition \
+    --database-name dq_agent_demo \
+    --table-name raw_yellow_taxi \
+    --partition-input "{
+      \"Values\": [\"2025\", \"$MONTH\"],
+      \"StorageDescriptor\": {
+        \"Location\": \"s3://$BUCKET/raw/yellow_taxi/year=2025/month=$MONTH/\",
+        \"InputFormat\": \"org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat\",
+        \"OutputFormat\": \"org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat\",
+        \"SerdeInfo\": {\"SerializationLibrary\": \"org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe\"},
+        \"Columns\": $(aws glue get-table --database-name dq_agent_demo --name raw_yellow_taxi --query 'Table.StorageDescriptor.Columns' --output json)
+      }
+    }" 2>/dev/null || true
+done
+```
+
+### 6. Deploy the agent to AgentCore
 
 ```bash
 cd agent
 agentcore configure --entrypoint agent.py --name dq_agent --requirements-file requirements.txt --region us-east-1 --protocol HTTP --non-interactive
 bash ac_deploy.sh
-```
-
-### 5. Test invocation
-
-```bash
-agentcore invoke '{"prompt": "Scan raw_yellow_taxi partition year=2025/month=09 for all quality issues."}'
-```
-
-### 6. Launch dashboard
-
-```bash
 cd ..
-PYTHONPATH=. uv run streamlit run dashboard/app.py
 ```
 
-The dashboard runs scans via AgentCore — click **🚀 Scan Now** to trigger the agent in the cloud.
+### 7. Grant the agent runtime permissions
 
-## Project Structure
+The AgentCore runtime role needs access to DynamoDB, Athena, S3, Bedrock, SNS, and CloudWatch. Replace the role name with the one output by `agentcore configure` (typically `AmazonBedrockAgentCoreSDKRuntime-us-east-1-<suffix>`):
 
-```
-├── agent/                    # Strands Agent
-│   ├── agent.py              # Main agent + AgentCore entrypoint
-│   ├── system_prompt.md      # Agent behavior definition
-│   ├── tools/                # 6 custom tools
-│   │   ├── scan_quality.py   # Athena SQL quality checks
-│   │   ├── check_schema.py   # Glue schema drift detection
-│   │   ├── diagnose_issue.py # LLM-powered root cause analysis
-│   │   ├── quarantine_records.py # Isolate bad records
-│   │   ├── notify_owner.py   # SNS alert notifications
-│   │   └── log_decision.py   # DynamoDB audit trail
-│   ├── utils/                # Athena, DynamoDB, CloudWatch helpers
-│   ├── config/               # Thresholds, schema baselines
-│   └── ac_deploy.sh          # AgentCore deploy script
-├── cdk/                      # Infrastructure as Code
-│   └── stacks/               # DataLake, Observability, Notification
-├── dashboard/                # Streamlit UI
-│   ├── app.py                # Main app
-│   └── pages/
-│       ├── 0_control_panel.py # Scan, chaos inject, restore buttons
-│       ├── 1_dashboard.py     # Quality scores, violations, quarantine
-│       └── 2_agent_activity.py # Decision timeline with reasoning
-├── data/                     # Download, chaos injector, upload scripts
-└── docs/                     # Architecture, demo guide
+```bash
+ROLE_NAME=$(aws iam list-roles --query "Roles[?contains(RoleName,'AgentCoreSDKRuntime')].RoleName" --output text)
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+aws iam put-role-policy --role-name "$ROLE_NAME" --policy-name DqAgentDataAccess --policy-document "{
+  \"Version\": \"2012-10-17\",
+  \"Statement\": [
+    {\"Effect\":\"Allow\",\"Action\":[\"dynamodb:PutItem\",\"dynamodb:GetItem\",\"dynamodb:Query\",\"dynamodb:Scan\",\"dynamodb:BatchWriteItem\"],\"Resource\":\"arn:aws:dynamodb:us-east-1:${ACCOUNT_ID}:table/*\"},
+    {\"Effect\":\"Allow\",\"Action\":[\"athena:StartQueryExecution\",\"athena:GetQueryExecution\",\"athena:GetQueryResults\"],\"Resource\":\"*\"},
+    {\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\",\"s3:PutObject\",\"s3:ListBucket\",\"s3:GetBucketLocation\"],\"Resource\":[\"arn:aws:s3:::dq-agent-demo-${ACCOUNT_ID}\",\"arn:aws:s3:::dq-agent-demo-${ACCOUNT_ID}/*\"]},
+    {\"Effect\":\"Allow\",\"Action\":[\"glue:GetTable\",\"glue:GetPartitions\",\"glue:GetDatabase\"],\"Resource\":\"*\"},
+    {\"Effect\":\"Allow\",\"Action\":[\"bedrock:InvokeModel\"],\"Resource\":\"*\"},
+    {\"Effect\":\"Allow\",\"Action\":[\"sns:Publish\",\"sns:ListTopics\"],\"Resource\":\"*\"},
+    {\"Effect\":\"Allow\",\"Action\":[\"cloudwatch:PutMetricData\"],\"Resource\":\"*\"}
+  ]
+}"
 ```
 
-## AWS Services Used
+### 8. Subscribe to alerts (optional)
 
-| Service | Purpose |
-|---------|---------|
-| Amazon Bedrock AgentCore | Agent runtime hosting |
-| Amazon Bedrock (Claude Haiku 4.5) | LLM reasoning for diagnosis |
-| Amazon S3 | Data lake (raw/staging/curated/quarantine) |
-| Amazon Athena | SQL-based quality checks and quarantine |
-| AWS Glue Data Catalog | Schema metadata registry |
-| Amazon DynamoDB | Agent state, decisions, baselines, remediation history |
-| Amazon CloudWatch | Metrics, alarms, dashboard |
-| Amazon SNS | Alert notifications |
-| OpenTelemetry | Agent observability traces (via X-Ray on AgentCore) |
+```bash
+aws sns subscribe \
+  --topic-arn "arn:aws:sns:us-east-1:$(aws sts get-caller-identity --query Account --output text):dq-agent-alerts" \
+  --protocol email \
+  --notification-endpoint your-email@example.com
+```
 
-## Cost Estimate
+Check your email and confirm the subscription.
 
-~$2.50–$3.00 per demo run (primarily Athena scan costs). See [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) for details.
+## Running the Demo
+
+### Start the dashboard
+
+```bash
+# Terminal 1: Backend API
+PYTHONPATH=. uv run uvicorn dashboard.api:app --reload --port 8000
+
+# Terminal 2: Frontend
+cd dashboard/ui && npm run dev
+```
+
+Open http://localhost:3000
+
+### Quick demo flow
+
+1. **Simulate Event** — Click "Simulate Event" to send a pre-built Glue DQ failure directly to the agent. This shows the agent's response in ~30 seconds without waiting for a real Glue DQ evaluation.
+
+2. **Full production flow** — Click "Inject Chaos and Upload" to corrupt the data, then "Run Evaluation" to trigger a real Glue DQ evaluation. When Glue DQ detects the issues, EventBridge fires the event, Lambda invokes the agent, and the agent responds. Takes 2-3 minutes.
+
+3. **Review results** — Check the Dashboard tab for quality scores and the Agent Activity tab for the full reasoning chain.
+
+4. **Restore** — Click "Restore Everything" to reset.
+
+### CLI test (no dashboard needed)
+
+```bash
+cd agent
+agentcore invoke '{"prompt": "Glue DQ evaluation dq-test-001 on raw_yellow_taxi partition year=2025/month=09 has FAILED. Process the following evaluation results:\n\n{\"evaluation_id\":\"dq-test-001\",\"database\":\"dq_agent_demo\",\"table\":\"raw_yellow_taxi\",\"partition\":\"year=2025/month=09\",\"overall_state\":\"FAILED\",\"rule_results\":[{\"rule\":\"Completeness \\\"tpep_pickup_datetime\\\" > 0.98\",\"state\":\"FAILED\",\"evaluated_metrics\":{\"Column.tpep_pickup_datetime.Completeness\":0.93}}]}"}'
+```
+
+## How the Agent Responds
+
+When the agent receives a Glue DQ failure event, it:
+
+1. **Parses** the violations (which rules failed, what was observed, severity)
+2. **Diagnoses** each violation using a focused LLM call (root cause analysis with historical context)
+3. **Quarantines** bad records by running Athena UNLOAD to an isolated S3 zone
+4. **Notifies** pipeline owners via SNS with severity, diagnosis, and recommended next steps
+5. **Logs** every decision to DynamoDB with full reasoning for audit
+
+## Cleanup
+
+```bash
+# Destroy all CDK infrastructure
+cd cdk
+uv run --extra cdk -- npx cdk destroy --app "python3 app.py" --all --force
+
+# Remove the AgentCore agent
+cd ../agent
+agentcore destroy --agent dq_agent
+```
+
+## Cost
+
+~$2.50–$3.00 per demo run. Breakdown: Glue DQ evaluation (~$1), Athena queries (~$0.50), Bedrock LLM calls (~$0.50), other services negligible at demo scale.
 
 ## License
 
-This project is licensed under the MIT-0 License. See [LICENSE](LICENSE).
+MIT-0 — See [LICENSE](LICENSE).

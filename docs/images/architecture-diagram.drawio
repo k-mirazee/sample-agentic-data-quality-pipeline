@@ -1,0 +1,150 @@
+<mxfile host="app.diagrams.net" agent="Claude">
+  <diagram id="dq-agent-architecture" name="Architecture">
+    <mxGraphModel dx="900" dy="600" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Autonomous Data Quality Response Architecture" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=14;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
+          <mxGeometry x="250" y="10" width="380" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Phase backgrounds -->
+        <mxCell id="bg-detect" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8FF;strokeColor=#D4B5FF;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="30" y="45" width="230" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="bg-route" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF0F5;strokeColor=#FFB8D4;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="275" y="45" width="190" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="bg-respond" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F9F5;strokeColor=#99E6D4;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="480" y="45" width="490" height="420" as="geometry" />
+        </mxCell>
+
+        <!-- Phase Labels -->
+        <mxCell id="phase-detect" value="DETECTION" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=9;fontStyle=1;fontColor=#8C4FFF;" vertex="1" parent="1">
+          <mxGeometry x="105" y="50" width="70" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="phase-route" value="ROUTING" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=9;fontStyle=1;fontColor=#E7157B;" vertex="1" parent="1">
+          <mxGeometry x="340" y="50" width="58" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="phase-respond" value="RESPONSE" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=9;fontStyle=1;fontColor=#01A88D;" vertex="1" parent="1">
+          <mxGeometry x="690" y="50" width="66" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- S3 Raw -->
+        <mxCell id="s3-raw" value="Amazon S3&lt;br&gt;&lt;b&gt;Raw Zone&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#3F8624;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="65" y="110" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Glue DQ -->
+        <mxCell id="glue-dq" value="AWS Glue&lt;br&gt;&lt;b&gt;Data Quality&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;" vertex="1" parent="1">
+          <mxGeometry x="175" y="110" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- EventBridge -->
+        <mxCell id="eventbridge" value="Amazon&lt;br&gt;&lt;b&gt;EventBridge&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;" vertex="1" parent="1">
+          <mxGeometry x="305" y="110" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Lambda -->
+        <mxCell id="lambda" value="AWS Lambda&lt;br&gt;&lt;b&gt;Event Bridge&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
+          <mxGeometry x="405" y="110" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- AgentCore -->
+        <mxCell id="agentcore" value="Amazon Bedrock&lt;br&gt;&lt;b&gt;AgentCore&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" vertex="1" parent="1">
+          <mxGeometry x="545" y="110" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Bedrock LLM -->
+        <mxCell id="bedrock-llm" value="Amazon Bedrock&lt;br&gt;&lt;b&gt;Claude Haiku 4.5&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#01A88D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" vertex="1" parent="1">
+          <mxGeometry x="545" y="310" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- S3 Quarantine -->
+        <mxCell id="s3-quarantine" value="Amazon S3&lt;br&gt;&lt;b&gt;Quarantine&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#3F8624;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
+          <mxGeometry x="720" y="80" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Athena -->
+        <mxCell id="athena" value="Amazon&lt;br&gt;&lt;b&gt;Athena&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.athena;" vertex="1" parent="1">
+          <mxGeometry x="870" y="80" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- DynamoDB -->
+        <mxCell id="dynamodb" value="Amazon&lt;br&gt;&lt;b&gt;DynamoDB&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#C925D1;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" vertex="1" parent="1">
+          <mxGeometry x="720" y="200" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- CloudWatch -->
+        <mxCell id="cloudwatch" value="Amazon&lt;br&gt;&lt;b&gt;CloudWatch&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch;" vertex="1" parent="1">
+          <mxGeometry x="870" y="200" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- SNS -->
+        <mxCell id="sns" value="Amazon SNS&lt;br&gt;&lt;b&gt;Alerts&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sns;" vertex="1" parent="1">
+          <mxGeometry x="720" y="310" width="40" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Main flow arrows (solid) -->
+        <mxCell id="a1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#232F3E;strokeWidth=2;endArrow=blockThin;endFill=1;" edge="1" source="s3-raw" target="glue-dq" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#232F3E;strokeWidth=2;endArrow=blockThin;endFill=1;" edge="1" source="glue-dq" target="eventbridge" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#232F3E;strokeWidth=2;endArrow=blockThin;endFill=1;" edge="1" source="eventbridge" target="lambda" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#232F3E;strokeWidth=2;endArrow=blockThin;endFill=1;" edge="1" source="lambda" target="agentcore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Agent to outputs (dashed) -->
+        <mxCell id="a-quarantine" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#3F8624;strokeWidth=1.5;dashed=1;endArrow=blockThin;endFill=1;" edge="1" source="agentcore" target="s3-quarantine" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="130" />
+              <mxPoint x="650" y="100" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="a-ddb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#C925D1;strokeWidth=1.5;dashed=1;endArrow=blockThin;endFill=1;" edge="1" source="agentcore" target="dynamodb" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="130" />
+              <mxPoint x="650" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="a-sns" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#E7157B;strokeWidth=1.5;dashed=1;endArrow=blockThin;endFill=1;" edge="1" source="agentcore" target="sns" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="130" />
+              <mxPoint x="650" y="330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Agent to LLM (vertical) -->
+        <mxCell id="a-llm" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#01A88D;strokeWidth=1.5;endArrow=blockThin;endFill=1;" edge="1" source="agentcore" target="bedrock-llm" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Quarantine to Athena -->
+        <mxCell id="a-athena" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#8C4FFF;strokeWidth=1;dashed=1;endArrow=blockThin;endFill=1;" edge="1" source="s3-quarantine" target="athena" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- DynamoDB to CloudWatch -->
+        <mxCell id="a-cw" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#666666;strokeWidth=1;dashed=1;endArrow=blockThin;endFill=1;" edge="1" source="dynamodb" target="cloudwatch" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
