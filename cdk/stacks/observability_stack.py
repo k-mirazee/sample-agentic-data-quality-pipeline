@@ -1,7 +1,11 @@
 """Observability stack — DynamoDB tables, CloudWatch alarms, CloudWatch dashboard."""
 
 import aws_cdk as cdk
-from aws_cdk import RemovalPolicy, aws_cloudwatch as cw, aws_cloudwatch_actions as cw_actions, aws_dynamodb as ddb, aws_sns as sns
+from aws_cdk import RemovalPolicy
+from aws_cdk import aws_cloudwatch as cw
+from aws_cdk import aws_cloudwatch_actions as cw_actions
+from aws_cdk import aws_dynamodb as ddb
+from aws_cdk import aws_sns as sns
 from constructs import Construct
 
 TTL_ATTRIBUTE = "ttl"

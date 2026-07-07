@@ -1,0 +1,15 @@
+Rules = [
+    Completeness "tpep_pickup_datetime" >= 0.98,
+    Completeness "tpep_dropoff_datetime" >= 0.98,
+    Completeness "passenger_count" >= 0.70,
+    Completeness "trip_distance" >= 0.98,
+    Completeness "fare_amount" >= 0.98,
+    RowCount > 100000,
+    Mean "fare_amount" between 5 and 100,
+    Mean "trip_distance" between 0.5 and 50,
+    ColumnExists "tpep_pickup_datetime",
+    ColumnExists "tpep_dropoff_datetime",
+    ColumnExists "passenger_count",
+    ColumnExists "fare_amount",
+    ColumnExists "trip_distance"
+]

@@ -1,12 +1,10 @@
 {
   "app": "python3 app.py",
   "context": {
-    "account": "015331669295",
     "region": "us-east-1",
     "model_id": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
     "notification_email": "",
-    "scan_schedule": "rate(6 hours)",
-    "athena_byte_limit": 104857600,
+    "athena_byte_limit": 1073741824,
     "data_retention_days": 90
   }
 }

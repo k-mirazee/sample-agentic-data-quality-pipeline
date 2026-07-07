@@ -1,7 +1,8 @@
 """Notification stack — SNS topic for agent alerts."""
 
 import aws_cdk as cdk
-from aws_cdk import aws_sns as sns, aws_sns_subscriptions as subs
+from aws_cdk import aws_sns as sns
+from aws_cdk import aws_sns_subscriptions as subs
 from constructs import Construct
 
 
