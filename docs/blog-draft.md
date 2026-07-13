@@ -171,7 +171,7 @@ The evaluation takes 2-3 minutes and all 13 rules pass. Glue DQ still emits an E
 aws logs tail /aws/lambda/dq-agent-event-bridge --since 10m --region us-east-1
 ```
 
-The log shows the received event and the line `No failed rules — skipping agent invocation`. The response layer only spends agent (and LLM) cycles when detection actually finds something.
+The log shows the received event and the line `No failed rules, skipping agent invocation`. The response layer only spends agent (and LLM) cycles when detection actually finds something.
 
 ### Step 6: Inject chaos and observe the agent response
 

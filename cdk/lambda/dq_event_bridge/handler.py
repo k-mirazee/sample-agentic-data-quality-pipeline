@@ -72,7 +72,7 @@ def handler(event, context):
     )
 
     if not normalized_results:
-        print("No failed rules — skipping agent invocation")
+        print("No failed rules, skipping agent invocation")
         return {"statusCode": 200, "body": "No failures to process", "evaluation_id": result_id}
 
     payload = {
